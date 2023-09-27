@@ -8,7 +8,8 @@
 #define WIFI_SSID "FRITZ!Box 7330"
 #define WIFI_PSK  "04885702616868858006"
 
-HardwareSerial SerialGPS(2);
+static HTTPClient http;
+static HardwareSerial SerialGPS(2);
 
 void setup()
 {
@@ -26,20 +27,9 @@ void setup()
 
     Serial.print("Connected. IP=");
     Serial.println(WiFi.localIP());
-    //HTTPClient http;
-    //http.begin("https://www.google.de");
-    //int httpResponseCode = http.GET();
-    //if (httpResponseCode>0) {
-    //    Serial.print("HTTP Response code: ");
-    //    Serial.println(httpResponseCode);
-    //    String payload = http.getString();
-    //    Serial.println(payload);
-    //  }
-    //  else {
-    //    Serial.print("Error code: ");
-    //    Serial.println(httpResponseCode);
-    //  }
-    //http.end();
+
+    http.setAuthorization("login", "1234");
+    http.begin("https://192.168.178.90");
 }
 
 void SendData(double lat, double lng, double alt, double kmh)
@@ -54,6 +44,13 @@ void SendData(double lat, double lng, double alt, double kmh)
     buffer += String(alt, 8) + ',';
     buffer += String(kmh, 8);
     Serial.printf("Buffer: %s\n", buffer.c_str());
+
+    int httpResponseCode = http.POST(buffer);
+    if (httpResponseCode != 200)
+    {
+        Serial.print("HTTP Post failed: ");
+        Serial.println(httpResponseCode);
+    }
 }
 
 
@@ -103,8 +100,10 @@ void loop()
                 locCount = 1;
                 altCount = 1;
                 kmhCount = 1;
+                toWait += 700;
             }
             delay(toWait);
         }
     }
+    delay(200);
 }

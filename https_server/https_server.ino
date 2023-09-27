@@ -15,8 +15,9 @@ using namespace httpsserver;
 #include "Hash.h"
 
 std::unique_ptr<HTTPSServer> secureServer;
-double xCord = 0, oldXCord = 0; // -180 - 180
-double yCord = 0, oldYCord = 0; // -90  -  90
+std::string xCord, oldXCord; // -180 - 180
+std::string yCord, oldYCord; // -90  -  90
+std::string data;
 unsigned long lastSignal = 0;
 
 void Restart()
@@ -121,7 +122,7 @@ void setup()
 void loop()
 {
     secureServer->loop();
-    delay(100);
+    delay(300);
 }
 
 
@@ -133,6 +134,7 @@ void Authenticate(HTTPRequest* req, HTTPResponse* res, std::function<void()> nex
         next();
     else
     {
+        res->setStatusCode(201);
         req->discardRequestBody();
         delay(random(1000, 30000));
     }
@@ -142,11 +144,11 @@ void Authenticate(HTTPRequest* req, HTTPResponse* res, std::function<void()> nex
 void HandlePost(HTTPRequest* req, HTTPResponse* res)
 {
     /*
-        Structure: "xcord,ycord,"
-        xcord:   9 chars
-        ycord:   9 chars
-        20 chars
-        example: "54.710231,32.704221,"
+        Structure: "lat,lng,alt,kmh"
+        every thing 8 decimal places and at max 3 before decimal i.e. 12 chars per entry
+
+        51 chars
+        example: "49.02536179,11.95466600,436.79907407,0.14565581"
 
         Authentication:
         User: login
@@ -154,7 +156,7 @@ void HandlePost(HTTPRequest* req, HTTPResponse* res)
     */
     
     size_t s = 0;
-    constexpr size_t bufferSize = 20;
+    constexpr size_t bufferSize = 51;
     char buffer[bufferSize+1] = {0};
 
     while(s < bufferSize && !req->requestComplete())
@@ -162,17 +164,18 @@ void HandlePost(HTTPRequest* req, HTTPResponse* res)
         s += req->readBytes((byte*)&buffer[s], bufferSize-s);
     }
 
-    if (!req->requestComplete() || s != bufferSize)
+    if (!req->requestComplete())
     {
         req->discardRequestBody();
+        Serial.println("Request is to long");
         return;
     }
 
 
     char* endx = nullptr, *endy = nullptr;
-    const double xTemp = strtod(buffer, &endx);
-    const double yTemp = strtod(&buffer[10], &endy);
-    if (endx == buffer || endy == &buffer[10])
+    strtod(buffer, &endx);
+    strtod(endx+1, &endy);
+    if (endx == buffer || endy == endx+1)
     {
         Serial.println("Failed to convert");
         delay(5000);
@@ -180,15 +183,16 @@ void HandlePost(HTTPRequest* req, HTTPResponse* res)
     }
     oldXCord = xCord;
     oldYCord = yCord;
-    xCord = xTemp;
-    yCord = yTemp;
+    xCord.assign(buffer, endx - buffer);
+    yCord.assign(endx+1, endy - (endx+1));
     lastSignal = millis();
 
-    Serial.printf("B: %s\n", buffer);
-    Serial.printf("old x: %.8g\n", oldXCord);
-    Serial.printf("old y: %.8g\n", oldYCord);
-    Serial.printf("x: %.8g\n", xCord);
-    Serial.printf("y: %.8g\n", yCord);
+    data = endy+1;
+    Serial.printf("B: %s\n", data.c_str());
+    Serial.printf("old x: %s\n", oldXCord.c_str());
+    Serial.printf("old y: %s\n", oldYCord.c_str());
+    Serial.printf("x: %s\n", xCord.c_str());
+    Serial.printf("y: %s\n", yCord.c_str());
 }
 
 
@@ -196,12 +200,13 @@ void HandleGet(HTTPRequest* req, HTTPResponse* res)
 {
     req->discardRequestBody();
     res->setHeader("Content-Type", "text/plain");
-    res->printf("%lu,%.8g,%.8g,%.8g,%.8g", (unsigned long)(millis() - lastSignal), xCord, yCord, oldXCord, oldYCord);
+    res->printf("%lu,%s,%s,%s,%s,%s", (unsigned long)(millis() - lastSignal), oldXCord.c_str(), oldYCord.c_str(), xCord.c_str(), yCord.c_str(), data.c_str());
 }
 
 
 void Handle404(HTTPRequest* req, HTTPResponse* res)
 {
+    res->setStatusCode(201);
     req->discardRequestBody();
     delay(random(1000, 30000));
 }
