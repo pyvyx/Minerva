@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'dart:io';
+import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
@@ -8,17 +10,31 @@ import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:http/http.dart' as http;
 
 void main()
 {
+  HttpOverrides.global = DevHttpOverrides();
   runApp(MaterialApp(home: Home()));
 }
+
+
+class DevHttpOverrides extends HttpOverrides
+{
+  @override
+  HttpClient createHttpClient(SecurityContext? context)
+  { // accept self signed certificate
+    return super.createHttpClient(context)..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 
 class Home extends StatefulWidget
 {
   @override
   _HomeState createState() => _HomeState();
 }
+
 
 class _HomeState extends State<Home>
 {
@@ -74,7 +90,7 @@ class _HomeState extends State<Home>
     }
     catch (e)
     {
-      print(e);
+      _ShowError("Failed to display map selector: ${e.toString()}");
     }
   }
 
@@ -117,21 +133,11 @@ class _HomeState extends State<Home>
     else return (timeInMs / 3600000.0).toStringAsFixed(2) + " hours";
   }
 
-  void _Request()
+
+  void _ParseBody(http.Response response)
   {
-    /*
-        Structure: "time_since_last_update,lat,lng,alt,kmh"
-        example: "3000,49.02536179,11.95466600,436,10"
-
-        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker)
-        TODO: server doesn't need to keep old pos, app is responsible for it
-
-        Authentication:
-        User: login
-        Pw: 1234
-    */
-    final String result = "3512,49.02536179,11.95466600,436,10";
-    List<String> split = result.split(",");
+    //final String result = "3512,49.02536179,11.95466600,436,10";
+    List<String> split = response.body.split(",");
     if (split.length != 5)
     {
       _ShowError("Result is not properly formatted");
@@ -152,6 +158,7 @@ class _HomeState extends State<Home>
       {
         // Will always update the first time because _Latitude = 0 and _Longitude = 0
         // that's a point in the golf of guinea
+        print("Update");
         setState(() {
           _Latitude = lat;
           _Longitude = lng;
@@ -173,43 +180,68 @@ class _HomeState extends State<Home>
     showModalBottomSheet(context: context, builder: (BuildContext context)
     {
       return SizedBox(
-        height: 200,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Row(children: <Widget>[
-                  const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Latitude:  "))),
-                  const VerticalDivider(width: 1.0),
-                Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Latitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude)))))
-              ]),
+          height: 200,
+          child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Row(children: <Widget>[
+                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Latitude:  "))),
+                    const VerticalDivider(width: 1.0),
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Latitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude)))))
+                  ]),
 
-              Row(children: <Widget>[
-                const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Longitude:  "))),
-                const VerticalDivider(width: 1.0),
-                Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Longitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude)))))
-              ]),
+                  Row(children: <Widget>[
+                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Longitude:  "))),
+                    const VerticalDivider(width: 1.0),
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Longitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude)))))
+                  ]),
 
-              Row(children: <Widget>[
-                const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Altitude:  "))),
-                const VerticalDivider(width: 1.0),
-                Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Altitude meters")))
-              ]),
+                  Row(children: <Widget>[
+                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Altitude:  "))),
+                    const VerticalDivider(width: 1.0),
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Altitude meters")))
+                  ]),
 
-              Row(children: <Widget>[
-                const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Speed:  "))),
-                const VerticalDivider(width: 1.0),
-                Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h")))
-              ]),
+                  Row(children: <Widget>[
+                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Speed:  "))),
+                    const VerticalDivider(width: 1.0),
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h")))
+                  ]),
 
-              Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal"),
-              Text("Time since last server update: $_TimeSinceLastServerUpdate")
-            ],
+                  Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal"),
+                  Text("Time since last server update: $_TimeSinceLastServerUpdate")
+                ],
+              )
           )
-        )
       );
     });
+  }
+
+
+  void _Request()
+  {
+    /*
+        Structure: "time_since_last_update,lat,lng,alt,kmh"
+        example: "3000,49.02536179,11.95466600,436,10"
+
+        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker)
+        TODO: server doesn't need to keep old pos, app is responsible for it
+
+        Authentication:
+        User: login
+        Pw: 1234
+    */
+
+    try
+    {
+      http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody);
+    }
+    on http.ClientException catch(e)
+    {
+      _ShowError("Failed to get information: ${e.message}");
+    }
   }
 
   @override
@@ -243,6 +275,28 @@ class _HomeState extends State<Home>
       )
     );
   }
+
+  // TODO: unmark
+  //Timer? _RequestTimer;
+  //@override
+  //void initState()
+  //{
+  //  _MakeRequest();
+  //}
+  //
+  //Future<void> _MakeRequest() async
+  //{
+  //  _RequestTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
+  //    _Request();//
+  //  });
+  //}
+//
+  //@override
+  //void dispose()
+  //{
+  //  _RequestTimer?.cancel();
+  //  super.dispose();
+  //}
 }
 
 
