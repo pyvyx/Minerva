@@ -28,7 +28,7 @@ class _HomeState extends State<Home>
   int _Speed = 0;
   String _TimeSinceLastTrackerSignal = "";
   String _TimeSinceLastServerUpdate = "";
-  Stopwatch _Stopwatch = Stopwatch()..start();
+  final Stopwatch _Stopwatch = Stopwatch()..start();
 
   Future<void> _OpenMapMobile(double latitude, double longitude) async
   {
@@ -139,14 +139,24 @@ class _HomeState extends State<Home>
 
     try
     {
-      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]));
-      _Latitude = double.parse(split[3]);
-      _Longitude = double.parse(split[4]);
-      _Altitude = int.parse(split[5]);
-      _Speed = int.parse(split[6]);
+      final double lat = double.parse(split[3]);
+      final double lng = double.parse(split[4]);
 
-      _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
-      _Stopwatch.reset();
+      if (lat != _Latitude || lng != _Longitude)
+      {
+        // Will always update the first time because _Latitude = 0 and _Longitude = 0
+        // that's a point in the golf of guinea
+        setState(() {
+          _Latitude = lat;
+          _Longitude = lng;
+          _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]));
+          _Altitude = int.parse(split[5]);
+          _Speed = int.parse(split[6]);
+
+          _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
+          _Stopwatch.reset();
+        });
+      }
     }
     on FormatException catch (e)
     {
@@ -212,12 +222,13 @@ class _HomeState extends State<Home>
                     options: MapOptions(center: LatLng(_Latitude, _Longitude), zoom: 8),
                     children: [
                       TileLayer(
-                        urlTemplate: ''
+                          urlTemplate: ""
+                        //urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
                         //urlTemplate: "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}",
                       ),
                       MarkerLayer(
                         markers: [
-                          Marker(point: LatLng(_Latitude, _Longitude), builder: (ctx) => IconButton(onPressed: _Request, icon: const Icon(Icons.directions_car)))
+                          Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => IconButton(onPressed: _Request, icon: const Icon(Icons.directions_car)))
                         ]
                       )
                     ],
