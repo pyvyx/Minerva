@@ -42,8 +42,8 @@ class _HomeState extends State<Home>
   double _Longitude = 0;
   int _Altitude = 0;
   int _Speed = 0;
-  String _TimeSinceLastTrackerSignal = "";
-  String _TimeSinceLastServerUpdate = "";
+  String _TimeSinceLastTrackerSignal = "Never";
+  String _TimeSinceLastServerUpdate = "Never";
   final Stopwatch _Stopwatch = Stopwatch()..start();
 
   Future<void> _OpenMapMobile(double latitude, double longitude) async
@@ -136,7 +136,6 @@ class _HomeState extends State<Home>
 
   void _ParseBody(http.Response response)
   {
-    //final String result = "3512,49.02536179,11.95466600,436,10";
     List<String> split = response.body.split(",");
     if (split.length != 5)
     {
@@ -176,7 +175,36 @@ class _HomeState extends State<Home>
     {
       _ShowError("Unknown exception: ${e.toString()}");
     }
+  }
 
+
+  void _Request()
+  {
+    /*
+        Structure: "time_since_last_update,lat,lng,alt,kmh"
+        example: "3000,49.02536179,11.95466600,436,10"
+
+        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker)
+        TODO: server doesn't need to keep old pos, app is responsible for it
+
+        Authentication:
+        User: login
+        Pw: 1234
+    */
+
+    try
+    {
+      http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody);
+    }
+    on http.ClientException catch(e)
+    {
+      _ShowError("Failed to get information: ${e.message}");
+    }
+  }
+
+
+  void _ShowInfoSection()
+  {
     showModalBottomSheet(context: context, builder: (BuildContext context)
     {
       return SizedBox(
@@ -220,33 +248,13 @@ class _HomeState extends State<Home>
   }
 
 
-  void _Request()
-  {
-    /*
-        Structure: "time_since_last_update,lat,lng,alt,kmh"
-        example: "3000,49.02536179,11.95466600,436,10"
-
-        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker)
-        TODO: server doesn't need to keep old pos, app is responsible for it
-
-        Authentication:
-        User: login
-        Pw: 1234
-    */
-
-    try
-    {
-      http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody);
-    }
-    on http.ClientException catch(e)
-    {
-      _ShowError("Failed to get information: ${e.message}");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(onPressed: () => print("l"), icon: const Icon(Icons.settings)),
+        title: const Text("Tracker")
+      ),
       body: Center(
           child: Container(
             child: Column(
@@ -263,7 +271,7 @@ class _HomeState extends State<Home>
                       ),
                       MarkerLayer(
                         markers: [
-                          Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => IconButton(onPressed: _Request, icon: const Icon(Icons.directions_car)))
+                          Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => IconButton(onPressed: _ShowInfoSection, icon: const Icon(Icons.directions_car)))
                         ]
                       )
                     ],
