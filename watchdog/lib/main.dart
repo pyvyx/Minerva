@@ -93,12 +93,12 @@ class _HomeState extends State<Home>
     }
     else
     {
-      ShowError("Could not open the map");
+      _ShowError("Could not open the map");
     }
   }
 
 
-  void ShowError(String msg)
+  void _ShowError(String msg)
   {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(msg),
@@ -133,7 +133,7 @@ class _HomeState extends State<Home>
     List<String> split = result.split(",");
     if (split.length != 7)
     {
-      ShowError("Result is not properly formatted");
+      _ShowError("Result is not properly formatted");
       return;
     }
 
@@ -150,12 +150,12 @@ class _HomeState extends State<Home>
     }
     on FormatException catch (e)
     {
-      ShowError("Failed to parse parameter: '${e.source}' ${e.message}");
+      _ShowError("Failed to parse parameter: '${e.source}' ${e.message}");
       return;
     }
     catch(e)
     {
-      ShowError("Unknown exception: ${e.toString()}");
+      _ShowError("Unknown exception: ${e.toString()}");
     }
 
     showModalBottomSheet(context: context, builder: (BuildContext context)
