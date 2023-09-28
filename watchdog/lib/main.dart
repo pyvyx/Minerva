@@ -26,6 +26,9 @@ class _HomeState extends State<Home>
   double _Longitude = 0;
   int _Altitude = 0;
   int _Speed = 0;
+  String _TimeSinceLastTrackerSignal = "";
+  String _TimeSinceLastServerUpdate = "";
+  Stopwatch _Stopwatch = Stopwatch()..start();
 
   Future<void> _OpenMapMobile(double latitude, double longitude) async
   {
@@ -107,19 +110,28 @@ class _HomeState extends State<Home>
   }
 
 
+  String _TimeAsString(int timeInMs)
+  {
+    if (timeInMs < 60000) return (timeInMs / 1000.0).toStringAsFixed(2) + " seconds";
+    else if (timeInMs < 3600000) return (timeInMs / 60000.0).toStringAsFixed(2) + " minutes";
+    else return (timeInMs / 3600000.0).toStringAsFixed(2) + " hours";
+  }
+
   void _Request()
   {
     /*
-        Structure: "lat,lng,alt,kmh"
-        example: "49.02536179,11.95466600,436.79907407,0.14565581"
+        Structure: "time_since_last_update,oldLat,oldLng,lat,lng,alt,kmh"
+        example: "3000,31.1290,59.138193,49.02536179,11.95466600,436,10"
+
+        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker)
 
         Authentication:
         User: login
         Pw: 1234
     */
-    final String result = "12.12345678,49.274982,465,10";
+    final String result = "3512,31.1290,59.138193,49.02536179,11.95466600,436,10";
     List<String> split = result.split(",");
-    if (split.length != 4)
+    if (split.length != 7)
     {
       ShowError("Result is not properly formatted");
       return;
@@ -127,10 +139,14 @@ class _HomeState extends State<Home>
 
     try
     {
-      _Latitude = double.parse(split[0]);
-      _Longitude = double.parse(split[1]);
-      _Altitude = int.parse(split[2]);
-      _Speed = int.parse(split[3]);
+      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]));
+      _Latitude = double.parse(split[3]);
+      _Longitude = double.parse(split[4]);
+      _Altitude = int.parse(split[5]);
+      _Speed = int.parse(split[6]);
+
+      _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
+      _Stopwatch.reset();
     }
     on FormatException catch (e)
     {
@@ -172,8 +188,11 @@ class _HomeState extends State<Home>
               Row(children: <Widget>[
                 const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Speed:  "))),
                 const VerticalDivider(width: 1.0),
-                Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("${_Speed} km/h")))
+                Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h")))
               ]),
+
+              Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal"),
+              Text("Time since last server update: $_TimeSinceLastServerUpdate")
             ],
           )
         )
