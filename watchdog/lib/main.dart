@@ -120,18 +120,19 @@ class _HomeState extends State<Home>
   void _Request()
   {
     /*
-        Structure: "time_since_last_update,oldLat,oldLng,lat,lng,alt,kmh"
-        example: "3000,31.1290,59.138193,49.02536179,11.95466600,436,10"
+        Structure: "time_since_last_update,lat,lng,alt,kmh"
+        example: "3000,49.02536179,11.95466600,436,10"
 
         TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker)
+        TODO: server doesn't need to keep old pos, app is responsible for it
 
         Authentication:
         User: login
         Pw: 1234
     */
-    final String result = "3512,31.1290,59.138193,49.02536179,11.95466600,436,10";
+    final String result = "3512,49.02536179,11.95466600,436,10";
     List<String> split = result.split(",");
-    if (split.length != 7)
+    if (split.length != 5)
     {
       _ShowError("Result is not properly formatted");
       return;
@@ -139,8 +140,13 @@ class _HomeState extends State<Home>
 
     try
     {
-      final double lat = double.parse(split[3]);
-      final double lng = double.parse(split[4]);
+      final double lat = double.parse(split[1]);
+      final double lng = double.parse(split[2]);
+
+      int tmp = _Stopwatch.elapsedMilliseconds;
+      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]) + tmp);
+      _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
+      _Stopwatch.reset();
 
       if (lat != _Latitude || lng != _Longitude)
       {
@@ -149,12 +155,8 @@ class _HomeState extends State<Home>
         setState(() {
           _Latitude = lat;
           _Longitude = lng;
-          _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]));
-          _Altitude = int.parse(split[5]);
-          _Speed = int.parse(split[6]);
-
-          _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
-          _Stopwatch.reset();
+          _Altitude = int.parse(split[3]);
+          _Speed = int.parse(split[4]);
         });
       }
     }
