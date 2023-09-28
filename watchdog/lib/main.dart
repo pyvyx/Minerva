@@ -90,8 +90,20 @@ class _HomeState extends State<Home>
     }
     else
     {
-      print("Could not open the map");
+      ShowError("Could not open the map");
     }
+  }
+
+
+  void ShowError(String msg)
+  {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      dismissDirection: DismissDirection.down,
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Colors.red[400],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    ));
   }
 
 
@@ -109,7 +121,7 @@ class _HomeState extends State<Home>
     List<String> split = result.split(",");
     if (split.length != 4)
     {
-      print("Result is not properly formatted");
+      ShowError("Result is not properly formatted");
       return;
     }
 
@@ -122,7 +134,12 @@ class _HomeState extends State<Home>
     }
     on FormatException catch (e)
     {
-      print("Failed to parse parameter: '${e.source}' ${e.message}");
+      ShowError("Failed to parse parameter: '${e.source}' ${e.message}");
+      return;
+    }
+    catch(e)
+    {
+      ShowError("Unknown exception: ${e.toString()}");
     }
 
     showModalBottomSheet(context: context, builder: (BuildContext context)
