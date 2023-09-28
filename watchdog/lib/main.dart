@@ -10,6 +10,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:settings_ui/settings_ui.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 void main()
@@ -249,10 +251,12 @@ class _HomeState extends State<Home>
 
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)
+  {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: () => print("l"), icon: const Icon(Icons.settings)),
+        leading: IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Settings())), icon: const Icon(Icons.settings)),
         title: const Text("Tracker")
       ),
       body: Center(
@@ -328,3 +332,52 @@ class _HomeState extends State<Home>
 
   Use at your own risk and responsibility.
 */
+
+
+class Settings extends StatefulWidget
+{
+  const Settings({super.key});
+
+  @override
+  State<Settings> createState() => _SettingsState();
+}
+
+
+class _SettingsState extends State<Settings>
+{
+  bool t = true;
+
+  @override
+  Widget build(BuildContext context)
+  {
+    return Scaffold(
+      appBar: AppBar(
+          leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_new)),
+          title: const Text("Settings")
+      ),
+      body: SettingsList(
+        platform: DevicePlatform.iOS,
+        sections: [
+          SettingsSection(
+            title: Text('Common'),
+            tiles: <SettingsTile>[
+              SettingsTile.navigation(
+                leading: Icon(Icons.language),
+                title: Text('Language'),
+                value: Text('English'),
+              ),
+              SettingsTile.switchTile(
+                onToggle: (value) { setState(() {
+                  t = !t;
+                });},
+                initialValue: t,
+                leading: Icon(Icons.format_paint),
+                title: Text('Enable custom theme'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
