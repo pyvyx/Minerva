@@ -221,11 +221,12 @@ class _HomeState extends State<Home>
               children: [
                 Flexible(
                   child: FlutterMap(
-                    options: MapOptions(center: LatLng(_Latitude, _Longitude), zoom: 8),
+                    options: MapOptions(center: LatLng(_Latitude, _Longitude), zoom: 8, interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate),
                     children: [
                       TileLayer(
                           urlTemplate: ""
-                        //urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                        //urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        //subdomains: ['a', 'b', 'c'],
                         //urlTemplate: "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}",
                       ),
                       MarkerLayer(
