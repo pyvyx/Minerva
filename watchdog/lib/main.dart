@@ -1,9 +1,13 @@
 import 'dart:ui';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:map_launcher/map_launcher.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/svg.dart';
 
 void main()
 {
@@ -22,6 +26,74 @@ class _HomeState extends State<Home>
   double _Longitude = 0;
   double _Altitude = 0;
   double _Speed = 0; // kmph
+
+  Future<void> _OpenMapMobile(double latitude, double longitude) async
+  {
+    try
+    {
+      const title = "Car";
+      final coords = Coords(latitude, longitude);
+      final availableMaps = await MapLauncher.installedMaps;
+      if (availableMaps.length == 1)
+      {
+        await availableMaps.first.showMarker(coords: coords, title: title);
+        return;
+      }
+
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: SingleChildScrollView(
+              child: Container(
+                child: Wrap(
+                  children: <Widget>[
+                    for (var map in availableMaps)
+                      ListTile(
+                        onTap: () => map.showMarker(
+                          coords: coords,
+                          title: title,
+                        ),
+                        title: Text(map.mapName),
+                        leading: SvgPicture.asset(
+                          map.icon,
+                          height: 30.0,
+                          width: 30.0,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+    catch (e)
+    {
+      print(e);
+    }
+  }
+
+  Future<void> _OpenMap(double latitude, double longitude) async
+  {
+    if (Platform.isAndroid || Platform.isIOS)
+    {
+      await _OpenMapMobile(latitude, longitude);
+      return;
+    }
+
+    final Uri url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$latitude,$longitude');
+    if (await canLaunchUrl(url))
+    {
+      await launchUrl(url);
+    }
+    else
+    {
+      print("Could not open the map");
+    }
+  }
+
 
   void _Request()
   {
@@ -62,22 +134,20 @@ class _HomeState extends State<Home>
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Text.rich(
-                  TextSpan(
-                    text: "Latitude: ",
-                    children: <TextSpan>[
-                      TextSpan(text: "$_Latitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => print('Tap Here onTap'))
-                    ]
+                Text.rich(TextSpan(
+                  text: "Latitude: ",
+                  children: <TextSpan>[
+                    TextSpan(text: "$_Latitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude))
+                  ]
                 )),
 
-                Text.rich(
-                    TextSpan(
-                        text: "Longitude: ",
-                        children: <TextSpan>[
-                          TextSpan(text: "$_Longitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => print('Tap Here onTap'))
-                        ]
-                    )),
-                
+                Text.rich(TextSpan(
+                  text: "Longitude: ",
+                  children: <TextSpan>[
+                    TextSpan(text: "$_Longitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude))
+                  ]
+                )),
+
                 Text("Altitude: $_Altitude"),
                 Text("Speed: $_Speed")
               ],
@@ -101,7 +171,7 @@ class _HomeState extends State<Home>
               children: [
                 Flexible(
                   child: FlutterMap(
-                    options: MapOptions(center: LatLng(52.520008, 13.404954), zoom: 8),
+                    options: MapOptions(center: LatLng(_Latitude, _Longitude), zoom: 8),
                     children: [
                       TileLayer(
                         urlTemplate: ''
@@ -109,7 +179,7 @@ class _HomeState extends State<Home>
                       ),
                       MarkerLayer(
                         markers: [
-                          Marker(point: LatLng(52.520008, 13.404954), builder: (ctx) => IconButton(onPressed: _Request, icon: const Icon(Icons.directions_car)))
+                          Marker(point: LatLng(_Latitude, _Longitude), builder: (ctx) => IconButton(onPressed: _Request, icon: const Icon(Icons.directions_car)))
                         ]
                       )
                     ],
