@@ -363,13 +363,14 @@ class _HomeState extends State<Home>
 
 class Settings
 {
+  // map settings
   static bool darkMode = true;
   static bool useGoogleMaps = false;
+  static bool mapRotation = false;
   static int maxZoom = 22;
   static int minZoom = 4;
   static int maxNativeZoom = 22;
   static int minNativeZoom = 4;
-
   static List<int> zoomList = List<int>.generate(30, (i) => i + 1);
 }
 
@@ -490,6 +491,13 @@ class _SettingsPageState extends State<SettingsPage>
                   initialValue: Settings.darkMode
                 ),
 
+                SettingsTile.switchTile(
+                  title: const Text("Map rotation"),
+                  onToggle: (value) => setState(() => Settings.mapRotation = value),
+                  leading: const Icon(CupertinoIcons.crop_rotate),
+                  initialValue: Settings.mapRotation
+                ),
+
                 SettingsTile.navigation(
                   title: const Text("Max zoom"),
                   leading: const Icon(CupertinoIcons.zoom_in),
@@ -533,9 +541,9 @@ class _SettingsPageState extends State<SettingsPage>
   if google select state (traffic, etc.) and e.g. (roads only)
   -- Dark mode for the map
   -- max zoom
-  min zoom
-  max native zoom
-  min native zoom
+  -- min zoom
+  -- max native zoom
+  -- min native zoom
   map rotation
 
   Tracker:
