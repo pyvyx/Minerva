@@ -367,6 +367,8 @@ class Settings
   static bool useGoogleMaps = false;
   static int maxZoom = 22;
   static int minZoom = 4;
+  static int maxNativeZoom = 22;
+  static int minNativeZoom = 4;
 
   static List<int> zoomList = List<int>.generate(30, (i) => i + 1);
 }
@@ -500,6 +502,20 @@ class _SettingsPageState extends State<SettingsPage>
                   leading: const Icon(CupertinoIcons.zoom_out),
                   value: Text(Settings.zoomList[Settings.minZoom].toString()),
                   onPressed: (context) => _NumberPicker(Settings.minZoom).then((value) => setState(() { Settings.maxZoom = value > Settings.maxZoom ? value : Settings.maxZoom; Settings.minZoom = value; })),
+                ),
+
+                SettingsTile.navigation(
+                  title: const Text("Max native zoom"),
+                  leading: const Icon(CupertinoIcons.zoom_in),
+                  value: Text(Settings.zoomList[Settings.maxNativeZoom].toString()),
+                  onPressed: (context) => _NumberPicker(Settings.maxNativeZoom).then((value) => setState(() { Settings.minNativeZoom = value < Settings.minNativeZoom ? value : Settings.minNativeZoom; Settings.maxNativeZoom = value; })),
+                ),
+
+                SettingsTile.navigation(
+                  title: const Text("Min native zoom"),
+                  leading: const Icon(CupertinoIcons.zoom_out),
+                  value: Text(Settings.zoomList[Settings.minNativeZoom].toString()),
+                  onPressed: (context) => _NumberPicker(Settings.minNativeZoom).then((value) => setState(() { Settings.maxNativeZoom = value > Settings.maxNativeZoom ? value : Settings.maxNativeZoom; Settings.minNativeZoom = value; })),
                 )
               ],
             )
