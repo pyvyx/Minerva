@@ -17,7 +17,7 @@ import 'package:http/http.dart' as http;
 void main()
 {
   HttpOverrides.global = DevHttpOverrides();
-  runApp(CupertinoApp(home: Home()));
+  runApp(CupertinoApp(home: Home(), theme: CupertinoThemeData(brightness: Brightness.dark)));
 }
 
 
@@ -210,14 +210,14 @@ class _HomeState extends State<Home>
         Structure: "time_since_last_update,lat,lng,alt,kmh"
         example: "3000,49.02536179,11.95466600,436,10"
 
-        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker)
+        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker), battery percentage
         TODO: server doesn't need to keep old pos, app is responsible for it
 
         Authentication:
         User: login
         Pw: 1234
     */
-    
+
     http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((e){_ShowError("Failed to get information: ${e.toString()}");});
   }
 
@@ -382,6 +382,7 @@ class _SettingsState extends State<Settings>
       ),
       child: SafeArea(
         child: SettingsList(
+          applicationType: ApplicationType.cupertino,
           platform: DevicePlatform.iOS,
           sections: [
             SettingsSection(
