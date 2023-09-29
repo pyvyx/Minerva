@@ -217,18 +217,8 @@ class _HomeState extends State<Home>
         User: login
         Pw: 1234
     */
-
-    try
-    {
-      print("lol");
-      http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((){
-        _ShowError("Failed to get information: ${""}");
-      });
-    }
-    on http.ClientException catch(e)
-    {
-      _ShowError("Failed to get information: ${e.message}");
-    }
+    
+    http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((e){_ShowError("Failed to get information: ${e.toString()}");});
   }
 
 
