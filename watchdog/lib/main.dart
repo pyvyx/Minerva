@@ -277,13 +277,19 @@ class _HomeState extends State<Home>
   }
 
 
+  void _UpdateHomePage(dynamic)
+  {
+    setState(() {});
+  }
+
+
   @override
   Widget build(BuildContext context)
   {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => const SettingsPage())), padding: EdgeInsets.zero,  child: const Icon(Icons.settings)),
+        leading: CupertinoButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => SettingsPage(updateHomePage: _UpdateHomePage))), padding: EdgeInsets.zero,  child: const Icon(Icons.settings)),
         middle: const Text("Tracker")
       ),
       child: Center(
@@ -292,11 +298,11 @@ class _HomeState extends State<Home>
               children: [
                 Flexible(
                   child: FlutterMap(
-                    options: MapOptions(center: LatLng(_Latitude, _Longitude), zoom: 8, interactiveFlags: InteractiveFlag.all & ~InteractiveFlag.rotate),
+                    options: MapOptions(center: LatLng(_Latitude, _Longitude), zoom: 8, interactiveFlags: Settings.mapRotation ? InteractiveFlag.all : InteractiveFlag.all & ~InteractiveFlag.rotate),
                     children: [
                       TileLayer(
-                          urlTemplate: ""
-                        //urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          //urlTemplate: ""
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         //subdomains: ['a', 'b', 'c'],
                         //urlTemplate: "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}",
                       ),
@@ -377,15 +383,19 @@ class Settings
 
 class SettingsPage extends StatefulWidget
 {
-  const SettingsPage({super.key});
+  final ValueChanged updateHomePage;
+  const SettingsPage({super.key, required this.updateHomePage});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  State<SettingsPage> createState() => _SettingsPageState(updateHomePage: updateHomePage);
 }
 
 
 class _SettingsPageState extends State<SettingsPage>
 {
+  final ValueChanged updateHomePage;
+  _SettingsPageState({required this.updateHomePage});
+
   void _SelectMapProvider(BuildContext context) async
   {
     await showCupertinoModalPopup<void>(
@@ -466,7 +476,7 @@ class _SettingsPageState extends State<SettingsPage>
   {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () => Navigator.pop(context), padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
+        leading: CupertinoButton(onPressed: () { Navigator.pop(context); updateHomePage(1); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
         middle: const Text("Settings"),
       ),
       child: SafeArea(
@@ -544,7 +554,7 @@ class _SettingsPageState extends State<SettingsPage>
   -- min zoom
   -- max native zoom
   -- min native zoom
-  map rotation
+  -- map rotation
 
   Tracker:
   how long to sleep after send
