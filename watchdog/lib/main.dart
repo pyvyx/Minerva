@@ -17,7 +17,7 @@ import 'package:http/http.dart' as http;
 void main()
 {
   HttpOverrides.global = DevHttpOverrides();
-  runApp(CupertinoApp(home: Home(), theme: CupertinoThemeData(brightness: Brightness.dark)));
+  runApp(CupertinoApp(home: Home(), theme: const CupertinoThemeData(brightness: Brightness.dark)));
 }
 
 
@@ -283,7 +283,7 @@ class _HomeState extends State<Home>
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => const Settings())), padding: EdgeInsets.zero,  child: const Icon(Icons.settings)),
+        leading: CupertinoButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => const SettingsPage())), padding: EdgeInsets.zero,  child: const Icon(Icons.settings)),
         middle: const Text("Tracker")
       ),
       child: Center(
@@ -361,16 +361,22 @@ class _HomeState extends State<Home>
 */
 
 
-class Settings extends StatefulWidget
+class Settings
 {
-  const Settings({super.key});
-
-  @override
-  State<Settings> createState() => _SettingsState();
+  static bool darkMode = true;
 }
 
 
-class _SettingsState extends State<Settings>
+class SettingsPage extends StatefulWidget
+{
+  const SettingsPage({super.key});
+
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+
+class _SettingsPageState extends State<SettingsPage>
 {
   @override
   Widget build(BuildContext context)
@@ -386,24 +392,37 @@ class _SettingsState extends State<Settings>
           platform: DevicePlatform.iOS,
           sections: [
             SettingsSection(
-              title: Text('Common'),
+              title: Text("Map"),
               tiles: <SettingsTile>[
-                SettingsTile.navigation(
-                  leading: Icon(Icons.language),
-                  title: Text('Language'),
-                  value: Text('English'),
-                ),
                 SettingsTile.switchTile(
-                  onToggle: (value) {},
-                  initialValue: true,
-                  leading: Icon(Icons.format_paint),
-                  title: Text('Enable custom theme'),
+                  title: const Text("Dark mode"),
+                  onToggle: (value) => setState(() => Settings.darkMode = value),
+                  leading: Icon(Settings.darkMode ? Icons.dark_mode : Icons.sunny),
+                  initialValue: Settings.darkMode
                 ),
+                
               ],
-            ),
+            )
           ],
         ),
       )
     );
   }
 }
+
+/*
+  Settings:
+  Map:
+  select google / open maps
+  if google select state (traffic, etc.) and e.g. (roads only)
+  Dark mode for the map
+  max zoom
+  min zoom
+  max native zoom
+  min native zoom
+  map rotation
+
+  Tracker:
+  how long to sleep after send
+  coordinate samples to gather before sending
+*/
