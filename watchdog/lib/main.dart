@@ -293,30 +293,36 @@ class _HomeState extends State<Home>
         middle: const Text("Tracker")
       ),
       child: Center(
-          child: Container(
-            child: Column(
-              children: [
-                Flexible(
-                  child: FlutterMap(
-                    options: MapOptions(center: LatLng(_Latitude, _Longitude), zoom: 8, interactiveFlags: Settings.mapRotation ? InteractiveFlag.all : InteractiveFlag.all & ~InteractiveFlag.rotate),
-                    children: [
-                      TileLayer(
-                          //urlTemplate: ""
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        //subdomains: ['a', 'b', 'c'],
-                        //urlTemplate: "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}",
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => CupertinoButton(onPressed: _ShowInfoSection, padding: EdgeInsets.zero, child: const Icon(Icons.directions_car)))
-                        ]
-                      )
-                    ],
+        child: Column(
+          children: [
+            Flexible(
+              child: FlutterMap(
+                options: MapOptions(
+                  maxZoom: Settings.zoomList[Settings.maxZoom].toDouble(),
+                  minZoom: Settings.zoomList[Settings.minZoom].toDouble(),
+                  center: LatLng(_Latitude, _Longitude),
+                  zoom: 8,
+                  interactiveFlags: Settings.mapRotation ? InteractiveFlag.all : InteractiveFlag.all & ~InteractiveFlag.rotate
+                ),
+                children: [
+                  TileLayer(
+                    maxNativeZoom: Settings.zoomList[Settings.maxNativeZoom],
+                    minNativeZoom: Settings.zoomList[Settings.minNativeZoom],
+                    urlTemplate: ""
+                    //urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    //subdomains: ['a', 'b', 'c'],
+                    //urlTemplate: "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}",
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(rotate: false, point: LatLng(_Latitude, _Longitude), builder: (ctx) => CupertinoButton(onPressed: _ShowInfoSection, padding: EdgeInsets.zero, child: const Icon(Icons.directions_car)))
+                    ]
                   )
-                )
-              ],
+                ],
+              )
             )
-          )
+          ],
+        )
       )
     );
   }
@@ -371,13 +377,13 @@ class Settings
 {
   // map settings
   static bool darkMode = true;
-  static bool useGoogleMaps = false;
+  static int mapProvider = 0; // 0 = open street map, 1 = google maps, 2 = none
   static bool mapRotation = false;
-  static int maxZoom = 22;
-  static int minZoom = 4;
-  static int maxNativeZoom = 22;
-  static int minNativeZoom = 4;
-  static List<int> zoomList = List<int>.generate(30, (i) => i + 1);
+  static int maxZoom = 17;
+  static int minZoom = 0;
+  static int maxNativeZoom = 10;
+  static int minNativeZoom = 0;
+  static List<int> zoomList = List<int>.generate(18, (i) => i + 1);
 }
 
 
@@ -405,17 +411,24 @@ class _SettingsPageState extends State<SettingsPage>
         actions: <CupertinoActionSheetAction>[
           CupertinoActionSheetAction(
             onPressed: () {
-              Settings.useGoogleMaps = true;
+              Settings.mapProvider = 0;
+              Navigator.pop(context);
+            },
+            child: const Text('OpenStreetMap'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Settings.mapProvider = 1;
               Navigator.pop(context);
             },
             child: const Text('Google Maps'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              Settings.useGoogleMaps = false;
+              Settings.mapProvider = 2;
               Navigator.pop(context);
             },
-            child: const Text('OpenStreetMap'),
+            child: const Text('None'),
           ),
         ],
       ),
@@ -490,7 +503,7 @@ class _SettingsPageState extends State<SettingsPage>
                 SettingsTile.navigation(
                   title: const Text("Map provider"),
                   leading: const Icon(CupertinoIcons.map),
-                  value: Text(Settings.useGoogleMaps ? "Google Maps" : "OpenStreetMap"),
+                  value: Text(Settings.mapProvider == 0 ? "OpenStreetMap" : Settings.mapProvider == 1 ? "Google Maps" : "None"),
                   onPressed: (context) => _SelectMapProvider(context),
                 ),
 
