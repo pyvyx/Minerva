@@ -364,6 +364,11 @@ class _HomeState extends State<Home>
 class Settings
 {
   static bool darkMode = true;
+  static bool useGoogleMaps = false;
+  static int maxZoom = 22;
+  static int minZoom = 4;
+
+  static List<int> zoomList = List<int>.generate(30, (i) => i + 1);
 }
 
 
@@ -378,6 +383,81 @@ class SettingsPage extends StatefulWidget
 
 class _SettingsPageState extends State<SettingsPage>
 {
+  void _SelectMapProvider(BuildContext context) async
+  {
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Select map provider'),
+        actions: <CupertinoActionSheetAction>[
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Settings.useGoogleMaps = true;
+              Navigator.pop(context);
+            },
+            child: const Text('Google Maps'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Settings.useGoogleMaps = false;
+              Navigator.pop(context);
+            },
+            child: const Text('OpenStreetMap'),
+          ),
+        ],
+      ),
+    );
+    setState((){});
+  }
+
+
+  Future<void> _ShowDialog(Widget child) async
+  {
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) => Container(
+        height: 216,
+        padding: const EdgeInsets.only(top: 6.0),
+        // The Bottom margin is provided to align the popup above the system navigation bar.
+        margin: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        // Provide a background color for the popup.
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        // Use a SafeArea widget to avoid system overlaps.
+        child: SafeArea(
+          top: false,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+
+  Future<int> _NumberPicker(int idx) async
+  {
+    int num = idx;
+    await _ShowDialog(CupertinoPicker(
+      magnification: 1.22,
+      squeeze: 1.2,
+      useMagnifier: true,
+      itemExtent: 32,
+      scrollController: FixedExtentScrollController(initialItem: idx),
+      onSelectedItemChanged: (int selectedItem) {
+        setState(() {
+          num = selectedItem;
+        });
+      },
+      children:
+      List<Widget>.generate(Settings.zoomList.length, (int index) {
+        return Center(child: Text(Settings.zoomList[index].toString()));
+      }),
+      ),
+    );
+    return num;
+  }
+
+
   @override
   Widget build(BuildContext context)
   {
@@ -392,15 +472,35 @@ class _SettingsPageState extends State<SettingsPage>
           platform: DevicePlatform.iOS,
           sections: [
             SettingsSection(
-              title: Text("Map"),
+              title: const Text("Map"),
               tiles: <SettingsTile>[
+                SettingsTile.navigation(
+                  title: const Text("Map provider"),
+                  leading: const Icon(CupertinoIcons.map),
+                  value: Text(Settings.useGoogleMaps ? "Google Maps" : "OpenStreetMap"),
+                  onPressed: (context) => _SelectMapProvider(context),
+                ),
+
                 SettingsTile.switchTile(
                   title: const Text("Dark mode"),
                   onToggle: (value) => setState(() => Settings.darkMode = value),
                   leading: Icon(Settings.darkMode ? Icons.dark_mode : Icons.sunny),
                   initialValue: Settings.darkMode
                 ),
-                
+
+                SettingsTile.navigation(
+                  title: const Text("Max zoom"),
+                  leading: const Icon(CupertinoIcons.zoom_in),
+                  value: Text(Settings.zoomList[Settings.maxZoom].toString()),
+                  onPressed: (context) => _NumberPicker(Settings.maxZoom).then((value) => setState(() { Settings.minZoom = value < Settings.minZoom ? value : Settings.minZoom; Settings.maxZoom = value; })),
+                ),
+
+                SettingsTile.navigation(
+                  title: const Text("Min zoom"),
+                  leading: const Icon(CupertinoIcons.zoom_out),
+                  value: Text(Settings.zoomList[Settings.minZoom].toString()),
+                  onPressed: (context) => _NumberPicker(Settings.minZoom).then((value) => setState(() { Settings.maxZoom = value > Settings.maxZoom ? value : Settings.maxZoom; Settings.minZoom = value; })),
+                )
               ],
             )
           ],
@@ -413,10 +513,10 @@ class _SettingsPageState extends State<SettingsPage>
 /*
   Settings:
   Map:
-  select google / open maps
+  -- select google / open maps
   if google select state (traffic, etc.) and e.g. (roads only)
-  Dark mode for the map
-  max zoom
+  -- Dark mode for the map
+  -- max zoom
   min zoom
   max native zoom
   min native zoom
