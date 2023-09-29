@@ -122,7 +122,7 @@ void setup()
 void loop()
 {
     secureServer->loop();
-    delay(300);
+    delay(1500);
 }
 
 
@@ -200,7 +200,7 @@ void HandleGet(HTTPRequest* req, HTTPResponse* res)
 {
     req->discardRequestBody();
     res->setHeader("Content-Type", "text/plain");
-    res->printf("%lu,%s,%s,%s,%s,%s", (unsigned long)(millis() - lastSignal), oldXCord.c_str(), oldYCord.c_str(), xCord.c_str(), yCord.c_str(), data.c_str());
+    res->printf("%lu,%s,%s,%s", (unsigned long)(millis() - lastSignal), xCord.c_str(), yCord.c_str(), data.c_str());
 }
 
 

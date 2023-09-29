@@ -134,15 +134,18 @@ class _HomeState extends State<Home>
 
   void _ShowError(String msg)
   {
-    Timer? timer = Timer(Duration(milliseconds: 1200), () {
+    Timer? timer = Timer(Duration(milliseconds: 2500), () {
       Navigator.of(context, rootNavigator: true).pop();
     });
 
     showCupertinoModalPopup<void>(
       context: context,
-      builder: (BuildContext context) => CupertinoAlertDialog(
-        title: const Text('Alert'),
-        content: Text(msg)),
+      builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Alert', style: TextStyle(color: Colors.black)),
+        actions: [
+          Center(child: Text(msg, style: TextStyle(color: Colors.red[600])))
+        ]
+      ),
     ).then((value) {
       timer?.cancel();
       timer = null;
