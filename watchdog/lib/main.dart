@@ -4,20 +4,20 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:settings_ui/settings_ui.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 void main()
 {
   HttpOverrides.global = DevHttpOverrides();
-  runApp(MaterialApp(home: Home()));
+  runApp(CupertinoApp(home: Home()));
 }
 
 
@@ -50,50 +50,66 @@ class _HomeState extends State<Home>
 
   Future<void> _OpenMapMobile(double latitude, double longitude) async
   {
-    try
+    const title = "Car";
+    final coords = Coords(latitude, longitude);
+    final availableMaps = await MapLauncher.installedMaps;
+    if (availableMaps.length == 1)
     {
-      const title = "Car";
-      final coords = Coords(latitude, longitude);
-      final availableMaps = await MapLauncher.installedMaps;
-      if (availableMaps.length == 1)
-      {
-        await availableMaps.first.showMarker(coords: coords, title: title);
-        return;
-      }
+      await availableMaps.first.showMarker(coords: coords, title: title);
+      return;
+    }
 
-      showModalBottomSheet(
-        context: context,
-        builder: (BuildContext context) {
-          return SafeArea(
-            child: SingleChildScrollView(
-              child: Container(
-                child: Wrap(
-                  children: <Widget>[
-                    for (var map in availableMaps)
-                      ListTile(
-                        onTap: () => map.showMarker(
-                          coords: coords,
-                          title: title,
-                        ),
-                        title: Text(map.mapName),
-                        leading: SvgPicture.asset(
-                          map.icon,
-                          height: 30.0,
-                          width: 30.0,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    }
-    catch (e)
+    List<CupertinoActionSheetAction> actions = [];
+    for (var map in availableMaps)
     {
-      _ShowError("Failed to display map selector: ${e.toString()}");
+      actions.add(CupertinoActionSheetAction(
+        onPressed: () => map.showMarker(coords: coords, title: title,),
+        child: CupertinoListTile(
+          title: Text(map.mapName),
+          leading: SvgPicture.asset(
+            map.icon,
+            height: 30.0,
+            width: 30.0,
+          ),
+        )
+      ));
     }
+
+    showCupertinoModalPopup<void>(context: context, builder: (BuildContext context)
+    {
+      return CupertinoActionSheet(title: const Text("Information", style: TextStyle(color: Colors.black)), actions: actions);
+    });
+
+    // old version
+    //showCupertinoModalPopup(
+    //  context: context,
+    //  builder: (BuildContext context) {
+    //    return SafeArea(
+    //      child: SingleChildScrollView(
+    //        child: Container(
+    //          child: Wrap(
+    //            children: <Widget>[
+    //              for (var map in availableMaps)
+    //                CupertinoListTile(
+    //                  onTap: () => map.showMarker(
+    //                    coords: coords,
+    //                    title: title,
+    //                  ),
+    //                  title: Text(map.mapName),
+    //                  leading: SvgPicture.asset(
+    //                    map.icon,
+    //                    height: 30.0,
+    //                    width: 30.0,
+    //                  ),
+    //                  backgroundColor: Colors.white,
+    //                ),
+    //            ],
+    //          ),
+    //        ),
+    //      ),
+    //    );
+    //  },
+    //);
   }
 
   Future<void> _OpenMap(double latitude, double longitude) async
@@ -118,13 +134,19 @@ class _HomeState extends State<Home>
 
   void _ShowError(String msg)
   {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      dismissDirection: DismissDirection.down,
-      behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.red[400],
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-    ));
+    Timer? timer = Timer(Duration(milliseconds: 1200), () {
+      Navigator.of(context, rootNavigator: true).pop();
+    });
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (BuildContext context) => CupertinoAlertDialog(
+        title: const Text('Alert'),
+        content: Text(msg)),
+    ).then((value) {
+      timer?.cancel();
+      timer = null;
+    });
   }
 
 
@@ -171,7 +193,6 @@ class _HomeState extends State<Home>
     on FormatException catch (e)
     {
       _ShowError("Failed to parse parameter: '${e.source}' ${e.message}");
-      return;
     }
     catch(e)
     {
@@ -196,7 +217,10 @@ class _HomeState extends State<Home>
 
     try
     {
-      http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody);
+      print("lol");
+      http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((){
+        _ShowError("Failed to get information: ${""}");
+      });
     }
     on http.ClientException catch(e)
     {
@@ -207,44 +231,54 @@ class _HomeState extends State<Home>
 
   void _ShowInfoSection()
   {
-    showModalBottomSheet(context: context, builder: (BuildContext context)
+    showCupertinoModalPopup<void>(context: context, builder: (BuildContext context)
     {
-      return SizedBox(
-          height: 200,
-          child: Center(
-              child: Column(
+      return CupertinoActionSheet(
+        title: const Text("Information", style: TextStyle(color: Colors.black)),
+        actions: [
+          CupertinoActionSheetAction(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                  Row(children: <Widget>[
+                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Latitude:  ", style: TextStyle(color: Colors.black)))),
+                    const VerticalDivider(width: 1.0),
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Latitude", style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.underline),))))
+                ]),
+
+                Row(children: <Widget>[
+                  const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Longitude:  ", style: TextStyle(color: Colors.black)))),
+                  const VerticalDivider(width: 1.0),
+                  Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Longitude", style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.underline)))))
+                ]),
+            ]),
+            onPressed: () => _OpenMap(_Latitude, _Longitude),
+          ),
+
+          CupertinoActionSheetAction(
+            child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Row(children: <Widget>[
-                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Latitude:  "))),
+                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Altitude:  ", style: TextStyle(color: Colors.black)))),
                     const VerticalDivider(width: 1.0),
-                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Latitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude)))))
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Altitude meters", style: const TextStyle(color: Colors.black))))
                   ]),
 
                   Row(children: <Widget>[
-                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Longitude:  "))),
+                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Speed:  ", style: TextStyle(color: Colors.black)))),
                     const VerticalDivider(width: 1.0),
-                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Longitude", style: TextStyle(color: Colors.blue[600], fontWeight: FontWeight.bold, decoration: TextDecoration.underline), recognizer: TapGestureRecognizer()..onTap = () => _OpenMap(_Latitude, _Longitude)))))
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h", style: const TextStyle(color: Colors.black))))
                   ]),
 
-                  Row(children: <Widget>[
-                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Altitude:  "))),
-                    const VerticalDivider(width: 1.0),
-                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Altitude meters")))
-                  ]),
-
-                  Row(children: <Widget>[
-                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Speed:  "))),
-                    const VerticalDivider(width: 1.0),
-                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h")))
-                  ]),
-
-                  Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal"),
-                  Text("Time since last server update: $_TimeSinceLastServerUpdate")
-                ],
-              )
-          )
+                  Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal", style: const TextStyle(color: Colors.black)),
+                  Text("Time since last server update: $_TimeSinceLastServerUpdate", style: const TextStyle(color: Colors.black))
+                ]),
+            onPressed: () => _Request(),
+          ),
+        ]
       );
     });
   }
@@ -254,12 +288,12 @@ class _HomeState extends State<Home>
   Widget build(BuildContext context)
   {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Settings())), icon: const Icon(Icons.settings)),
-        title: const Text("Tracker")
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        leading: CupertinoButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => const Settings())), padding: EdgeInsets.zero,  child: const Icon(Icons.settings)),
+        middle: const Text("Tracker")
       ),
-      body: Center(
+      child: Center(
           child: Container(
             child: Column(
               children: [
@@ -275,7 +309,7 @@ class _HomeState extends State<Home>
                       ),
                       MarkerLayer(
                         markers: [
-                          Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => IconButton(onPressed: _ShowInfoSection, icon: const Icon(Icons.directions_car)))
+                          Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => CupertinoButton(onPressed: _ShowInfoSection, padding: EdgeInsets.zero, child: const Icon(Icons.directions_car)))
                         ]
                       )
                     ],
@@ -345,39 +379,37 @@ class Settings extends StatefulWidget
 
 class _SettingsState extends State<Settings>
 {
-  bool t = true;
-
   @override
   Widget build(BuildContext context)
   {
-    return Scaffold(
-      appBar: AppBar(
-          leading: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_new)),
-          title: const Text("Settings")
+    return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        leading: CupertinoButton(onPressed: () => Navigator.pop(context), padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
+        middle: const Text("Settings"),
       ),
-      body: SettingsList(
-        platform: DevicePlatform.iOS,
-        sections: [
-          SettingsSection(
-            title: Text('Common'),
-            tiles: <SettingsTile>[
-              SettingsTile.navigation(
-                leading: Icon(Icons.language),
-                title: Text('Language'),
-                value: Text('English'),
-              ),
-              SettingsTile.switchTile(
-                onToggle: (value) { setState(() {
-                  t = !t;
-                });},
-                initialValue: t,
-                leading: Icon(Icons.format_paint),
-                title: Text('Enable custom theme'),
-              ),
-            ],
-          ),
-        ],
-      ),
+      child: SafeArea(
+        child: SettingsList(
+          platform: DevicePlatform.iOS,
+          sections: [
+            SettingsSection(
+              title: Text('Common'),
+              tiles: <SettingsTile>[
+                SettingsTile.navigation(
+                  leading: Icon(Icons.language),
+                  title: Text('Language'),
+                  value: Text('English'),
+                ),
+                SettingsTile.switchTile(
+                  onToggle: (value) {},
+                  initialValue: true,
+                  leading: Icon(Icons.format_paint),
+                  title: Text('Enable custom theme'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      )
     );
   }
 }
