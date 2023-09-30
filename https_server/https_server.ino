@@ -14,11 +14,10 @@ using namespace httpsserver;
 
 #include "Hash.h"
 
-std::unique_ptr<HTTPSServer> secureServer;
-std::string xCord, oldXCord; // -180 - 180
-std::string yCord, oldYCord; // -90  -  90
-std::string data;
+constexpr size_t dataSize = 41;
+char data[dataSize+1] = {0};
 unsigned long lastSignal = 0;
+std::unique_ptr<HTTPSServer> secureServer;
 
 void Restart()
 {
@@ -57,7 +56,7 @@ void setup()
     // Now check if creating that worked
     if (createCertResult != 0)
     {
-        Serial.printf("Cerating certificate failed. Error Code = 0x%02X, check SSLCert.hpp for details", createCertResult);
+        Serial.printf("Creating certificate failed. Error Code = 0x%02X, check SSLCert.hpp for details", createCertResult);
         Restart();
     }
     Serial.println("Creating the certificate was successful");
@@ -122,7 +121,7 @@ void setup()
 void loop()
 {
     secureServer->loop();
-    delay(1500);
+    delay(300);
 }
 
 
@@ -133,22 +132,23 @@ void Authenticate(HTTPRequest* req, HTTPResponse* res, std::function<void()> nex
     if (strcmp(apiKey, hash_sha512_binary(req->getBasicAuthPassword().c_str(), req->getBasicAuthPassword().size(), NULL)) == 0 && strcmp(user, req->getBasicAuthUser().c_str()) == 0)
         next();
     else
-    {
-        res->setStatusCode(201);
-        req->discardRequestBody();
-        delay(random(1000, 30000));
-    }
+        Handle404(req, res);
 }
 
 
 void HandlePost(HTTPRequest* req, HTTPResponse* res)
 {
     /*
-        Structure: "lat,lng,alt,kmh"
-        every thing 8 decimal places and at max 3 before decimal i.e. 12 chars per entry
+        Structure: "battery,lat,lng,alt,kmh"
+        battery = 3 chars
+        lat = 13 chars
+        lng = 12 chars
+        alt = 5 chars
+        kmh = 4 chars
+        +4 commas
 
-        51 chars
-        example: "49.02536179,11.95466600,436.79907407,0.14565581"
+        41 chars
+        example: "67,49.02536179,11.95466600,436,0"
 
         Authentication:
         User: login
@@ -156,43 +156,22 @@ void HandlePost(HTTPRequest* req, HTTPResponse* res)
     */
     
     size_t s = 0;
-    constexpr size_t bufferSize = 51;
-    char buffer[bufferSize+1] = {0};
-
-    while(s < bufferSize && !req->requestComplete())
+    char buffer[dataSize+1];
+    while(s < dataSize && !req->requestComplete())
     {
-        s += req->readBytes((byte*)&buffer[s], bufferSize-s);
+        s += req->readBytes((byte*)&buffer[s], dataSize-s);
+        Serial.println(s);
     }
+    buffer[s] = 0;
 
     if (!req->requestComplete())
     {
         req->discardRequestBody();
-        Serial.println("Request is to long");
+        Serial.println("Request is too long");
         return;
     }
-
-
-    char* endx = nullptr, *endy = nullptr;
-    strtod(buffer, &endx);
-    strtod(endx+1, &endy);
-    if (endx == buffer || endy == endx+1)
-    {
-        Serial.println("Failed to convert");
-        delay(5000);
-        return;
-    }
-    oldXCord = xCord;
-    oldYCord = yCord;
-    xCord.assign(buffer, endx - buffer);
-    yCord.assign(endx+1, endy - (endx+1));
+    memcpy(data, buffer, dataSize);
     lastSignal = millis();
-
-    data = endy+1;
-    Serial.printf("B: %s\n", data.c_str());
-    Serial.printf("old x: %s\n", oldXCord.c_str());
-    Serial.printf("old y: %s\n", oldYCord.c_str());
-    Serial.printf("x: %s\n", xCord.c_str());
-    Serial.printf("y: %s\n", yCord.c_str());
 }
 
 
@@ -200,7 +179,7 @@ void HandleGet(HTTPRequest* req, HTTPResponse* res)
 {
     req->discardRequestBody();
     res->setHeader("Content-Type", "text/plain");
-    res->printf("%lu,%s,%s,%s", (unsigned long)(millis() - lastSignal), xCord.c_str(), yCord.c_str(), data.c_str());
+    res->printf("%lu,%s", (unsigned long)(millis() - lastSignal), data);
 }
 
 
