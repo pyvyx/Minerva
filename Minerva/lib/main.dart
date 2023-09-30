@@ -626,7 +626,7 @@ class _SettingsPageState extends State<SettingsPage>
               title: const Text("Map"),
               tiles: <SettingsTile>[
                 SettingsTile.navigation(
-                  title: const Text("Map provider"),
+                  title: const Text("Provider"),
                   leading: const Icon(CupertinoIcons.map),
                   value: Text(Settings.mapProvider == 0 ? "OpenStreetMap" : "Google Maps"),
                   onPressed: (context) => _SelectMapProvider(context),
@@ -640,7 +640,7 @@ class _SettingsPageState extends State<SettingsPage>
                 ),
 
                 SettingsTile.switchTile(
-                  title: const Text("Map rotation"),
+                  title: const Text("Rotation"),
                   onToggle: (value) => setState(() => Settings.mapRotation = value),
                   leading: const Icon(CupertinoIcons.crop_rotate),
                   initialValue: Settings.mapRotation
@@ -738,7 +738,7 @@ class _SettingsPageState extends State<SettingsPage>
       _RequestTimer = null;
     }).catchError((e){_ShowError(context, "Failed to get settings status: ${e.toString()}");});
 
-    _RequestTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
+    _RequestTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
       http.get(Uri.parse('https://${Settings.serverIp}/settings/tracker/status'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode(Settings.serverAuth))}'}).then((response) {
         setState(() {
           Settings.trackerApproved = response.statusCode == 203;
