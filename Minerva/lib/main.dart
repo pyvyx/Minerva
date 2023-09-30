@@ -21,7 +21,7 @@ Future<void> main() async
   await FlutterMapTileCaching.initialise();
   await FMTC.instance('mapStore').manage.createAsync();
   HttpOverrides.global = DevHttpOverrides();
-  runApp(CupertinoApp(home: Home(), theme: const CupertinoThemeData(brightness: Brightness.dark)));
+  runApp(const App());
 }
 
 
@@ -35,15 +35,44 @@ class DevHttpOverrides extends HttpOverrides
 }
 
 
+class App extends StatefulWidget
+{
+  const App({super.key});
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App>
+{
+  void _UpdateApp(dynamic)
+  {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoApp(home: Home(updateApp: _UpdateApp), theme: CupertinoThemeData(brightness: Settings.darkModeApp ? Brightness.dark : Brightness.light));
+  }
+}
+
+
+
 class Home extends StatefulWidget
 {
+  final ValueChanged updateApp;
+  const Home({super.key, required this.updateApp});
+
   @override
-  _HomeState createState() => _HomeState();
+  _HomeState createState() => _HomeState(updateApp: updateApp);
 }
 
 
 class _HomeState extends State<Home>
 {
+  final ValueChanged updateApp;
+  _HomeState({required this.updateApp});
+
   double _Latitude = 0;
   double _Longitude = 0;
   int _Altitude = 0;
@@ -293,7 +322,7 @@ class _HomeState extends State<Home>
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => SettingsPage(updateHomePage: _UpdateHomePage))), padding: EdgeInsets.zero,  child: const Icon(Icons.settings)),
+        leading: CupertinoButton(onPressed: () => Navigator.push(context, CupertinoPageRoute(builder: (context) => SettingsPage(updateHomePage: _UpdateHomePage, updateApp: updateApp))), padding: EdgeInsets.zero,  child: const Icon(Icons.settings)),
         middle: const Text("Tracker")
       ),
       child: Center(
@@ -377,6 +406,9 @@ class _HomeState extends State<Home>
 
 class Settings
 {
+  // app settings
+  static bool darkModeApp = true;
+
   // map settings
   static bool darkMode = true;
   static int mapProvider = 0; // 0 = open street map, 1 = google maps
@@ -408,18 +440,20 @@ class Settings
 
 class SettingsPage extends StatefulWidget
 {
+  final ValueChanged updateApp;
   final ValueChanged updateHomePage;
-  const SettingsPage({super.key, required this.updateHomePage});
+  const SettingsPage({super.key, required this.updateHomePage, required this.updateApp});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState(updateHomePage: updateHomePage);
+  State<SettingsPage> createState() => _SettingsPageState(updateHomePage: updateHomePage, updateApp: updateApp);
 }
 
 
 class _SettingsPageState extends State<SettingsPage>
 {
+  final ValueChanged updateApp;
   final ValueChanged updateHomePage;
-  _SettingsPageState({required this.updateHomePage});
+  _SettingsPageState({required this.updateHomePage, required this.updateApp});
 
   void _SelectMapProvider(BuildContext context) async
   {
@@ -523,6 +557,18 @@ class _SettingsPageState extends State<SettingsPage>
           applicationType: ApplicationType.cupertino,
           platform: DevicePlatform.iOS,
           sections: [
+            SettingsSection(
+              title: const Text("Common"),
+              tiles: <SettingsTile>[
+                SettingsTile.switchTile(
+                    title: const Text("Dark mode"),
+                    onToggle: (value) => setState(() { Settings.darkModeApp = value; updateApp(1); }),
+                    leading: Icon(Settings.darkModeApp ? Icons.dark_mode : Icons.sunny),
+                    initialValue: Settings.darkModeApp
+                ),
+              ]
+            ),
+
             SettingsSection(
               title: const Text("Map"),
               tiles: <SettingsTile>[
