@@ -13,9 +13,13 @@ import 'package:settings_ui/settings_ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 
-void main()
+Future<void> main() async
 {
+  WidgetsFlutterBinding.ensureInitialized();
+  await FlutterMapTileCaching.initialise();
+  await FMTC.instance('mapStore').manage.createAsync();
   HttpOverrides.global = DevHttpOverrides();
   runApp(CupertinoApp(home: Home(), theme: const CupertinoThemeData(brightness: Brightness.dark)));
 }
@@ -306,6 +310,7 @@ class _HomeState extends State<Home>
                 ),
                 children: [
                   TileLayer(
+                    tileProvider: FMTC.instance('mapStore').getTileProvider(),
                     maxNativeZoom: Settings.zoomList[Settings.maxNativeZoom],
                     minNativeZoom: Settings.zoomList[Settings.minNativeZoom],
                     urlTemplate: Settings.MapProviderLink()
