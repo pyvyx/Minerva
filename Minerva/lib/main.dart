@@ -372,6 +372,8 @@ class _HomeState extends State<Home>
 
 void _ShowError(BuildContext context, String msg)
 {
+  if (!context.mounted) return;
+
   Timer? timer = Timer(Duration(milliseconds: 2500), () {
     Navigator.of(context, rootNavigator: true).pop();
   });
@@ -735,6 +737,7 @@ class _SettingsPageState extends State<SettingsPage>
       setState(() {
         Settings.trackerApproved = response.statusCode == 203;
       });
+      _RequestTimer?.cancel();
       _RequestTimer = null;
     }).catchError((e){_ShowError(context, "Failed to get settings status: ${e.toString()}");});
 
@@ -743,6 +746,7 @@ class _SettingsPageState extends State<SettingsPage>
         setState(() {
           Settings.trackerApproved = response.statusCode == 203;
         });
+        _RequestTimer?.cancel();
         _RequestTimer = null;
       }).catchError((e){_ShowError(context, "Failed to get settings status: ${e.toString()}");});
     });
@@ -752,6 +756,7 @@ class _SettingsPageState extends State<SettingsPage>
   void dispose()
   {
     _RequestTimer?.cancel();
+    _RequestTimer = null;
     super.dispose();
   }
 }
