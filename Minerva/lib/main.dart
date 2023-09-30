@@ -486,6 +486,13 @@ class _SettingsPageState extends State<SettingsPage>
               Navigator.pop(context);
             },
             child: const Text('Google Maps'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            isDestructiveAction: true,
+            child: const Text('Cancel')
           )
         ],
       ),
