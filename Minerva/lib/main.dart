@@ -444,6 +444,7 @@ class Settings
   }
 
   // tracker settings
+  static bool trackerApproved = true;
   static bool updateTracker = false;
   static Duration sleepAfterSendVar = const Duration(seconds: 45);
   static Duration sleepBetweenSamplesVar = const Duration(seconds: 1);
@@ -468,18 +469,20 @@ class Settings
 
   static Future<void> UpdateTracker(BuildContext context) async
   {
-    if (!updateTracker) return;
-
     try
     {
-      await http.post(Uri.parse('https://192.168.178.90/settings/tracker'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}, body: _BuildTrackerBody()).then((e) => updateTracker = false);
+      await http.post(Uri.parse('https://192.168.178.90/settings/tracker'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}, body: _BuildTrackerBody());
+      updateTracker = false;
+      trackerApproved = false;
     }
     catch (e)
     {
       _ShowError(context, "Failed to post tracker settings: ${e.toString()}");
-      updateTracker = false;
     }
   }
+
+  // server settings
+  static String serverIp = "192.168.178.90";
 }
 
 
@@ -601,7 +604,7 @@ class _SettingsPageState extends State<SettingsPage>
   {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () { Settings.UpdateTracker(context).then((v) {Navigator.pop(context); updateHomePage(1);}); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
+        leading: CupertinoButton(onPressed: () { Navigator.pop(context); updateHomePage(1); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
         middle: const Text("Settings"),
       ),
       child: SafeArea(
@@ -678,6 +681,13 @@ class _SettingsPageState extends State<SettingsPage>
             SettingsSection(
               title: const Text("Tracker"),
               tiles: <SettingsTile>[
+                SettingsTile(
+                  enabled: Settings.updateTracker,
+                  title: Settings.updateTracker ? const Text("Update") : Text(Settings.trackerApproved ? "Approved" : "Pending"),
+                  leading: Settings.updateTracker ? const Icon(Icons.update) : Icon(Settings.trackerApproved ? CupertinoIcons.check_mark : Icons.pending),
+                  onPressed: (context) => Settings.UpdateTracker(context).then((a){initState(); setState(() {});}),
+                ),
+
                 SettingsTile.navigation(
                   title: const Text("Sleep after send"),
                   leading: const Icon(CupertinoIcons.time_solid),
@@ -711,6 +721,40 @@ class _SettingsPageState extends State<SettingsPage>
         ),
       )
     );
+  }
+
+
+  Timer? _RequestTimer;
+  @override
+  void initState()
+  {
+    if (!Settings.trackerApproved) _MakeRequest();
+  }
+
+  Future<void> _MakeRequest() async
+  {
+    http.get(Uri.parse('https://${Settings.serverIp}/settings/tracker/status'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then((response) {
+      setState(() {
+        Settings.trackerApproved = response.statusCode == 203;
+      });
+      _RequestTimer = null;
+    }).catchError((e){_ShowError(context, "Failed to get settings status: ${e.toString()}");});
+
+    _RequestTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
+      http.get(Uri.parse('https://${Settings.serverIp}/settings/tracker/status'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then((response) {
+        setState(() {
+          Settings.trackerApproved = response.statusCode == 203;
+        });
+        _RequestTimer = null;
+      }).catchError((e){_ShowError(context, "Failed to get settings status: ${e.toString()}");});
+    });
+  }
+
+  @override
+  void dispose()
+  {
+    _RequestTimer?.cancel();
+    super.dispose();
   }
 }
 
