@@ -77,6 +77,7 @@ class _HomeState extends State<Home>
   double _Longitude = 0;
   int _Altitude = 0;
   int _Speed = 0;
+  int battery = 0;
   String _TimeSinceLastTrackerSignal = "Never";
   String _TimeSinceLastServerUpdate = "Never";
   final Stopwatch _Stopwatch = Stopwatch()..start();
@@ -260,7 +261,7 @@ class _HomeState extends State<Home>
     showCupertinoModalPopup<void>(context: context, builder: (BuildContext context)
     {
       return CupertinoActionSheet(
-        title: const Text("Information", style: TextStyle(color: Colors.black)),
+        title: const Text("Information"),
         actions: [
           CupertinoActionSheetAction(
             child: Column(
@@ -268,13 +269,13 @@ class _HomeState extends State<Home>
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                   Row(children: <Widget>[
-                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Latitude:  ", style: TextStyle(color: Colors.black)))),
+                    Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Latitude:  ", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)))),
                     const VerticalDivider(width: 1.0),
                     Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Latitude", style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.underline),))))
                 ]),
 
                 Row(children: <Widget>[
-                  const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Longitude:  ", style: TextStyle(color: Colors.black)))),
+                  Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Longitude:  ", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)))),
                   const VerticalDivider(width: 1.0),
                   Expanded(child: Align(alignment: Alignment.centerLeft, child: Text.rich(TextSpan(text: "$_Longitude", style: const TextStyle(fontWeight: FontWeight.bold, decoration: TextDecoration.underline)))))
                 ]),
@@ -288,19 +289,20 @@ class _HomeState extends State<Home>
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Row(children: <Widget>[
-                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Altitude:  ", style: TextStyle(color: Colors.black)))),
+                    Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Altitude:  ", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)))),
                     const VerticalDivider(width: 1.0),
-                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Altitude meters", style: const TextStyle(color: Colors.black))))
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Altitude meters", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))))
                   ]),
 
                   Row(children: <Widget>[
-                    const Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Speed:  ", style: TextStyle(color: Colors.black)))),
+                    Expanded(child: Align(alignment: Alignment.centerRight, child: Text("Speed:  ", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)))),
                     const VerticalDivider(width: 1.0),
-                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h", style: const TextStyle(color: Colors.black))))
+                    Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))))
                   ]),
 
-                  Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal", style: const TextStyle(color: Colors.black)),
-                  Text("Time since last server update: $_TimeSinceLastServerUpdate", style: const TextStyle(color: Colors.black))
+                  Text("\nBattery: $battery%", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
+                  Text("Time since last tracker signal: $_TimeSinceLastTrackerSignal", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
+                  Text("Time since last server update: $_TimeSinceLastServerUpdate", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))
                 ]),
             onPressed: () => _Request(),
           ),
