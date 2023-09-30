@@ -1,6 +1,6 @@
 // TODO: Configure your WiFi here
 #define WIFI_SSID "FRITZ!Box 7330"
-#define WIFI_PSK  "04885702616868858006"
+#define WIFI_PSK "04885702616868858006"
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -14,8 +14,23 @@ using namespace httpsserver;
 
 #include "Hash.h"
 
-constexpr size_t dataSize = 41;
-char data[dataSize+1] = {0};
+enum Status 
+{ 
+    Ok = 200,
+    SettingsChanged = 201,
+    SettingsPending = 202,
+    SettingsApplied = 203,
+    Error = 204
+};
+
+constexpr size_t dataSize = 37;
+char data[dataSize + 1] = { 0 };
+
+constexpr size_t settingsDataSize = 29;
+char settingsData[settingsDataSize + 1] = { 0 };
+bool settingsChanged = false;
+bool settingsApplied = false;
+
 unsigned long lastSignal = 0;
 std::unique_ptr<HTTPSServer> secureServer;
 
@@ -29,7 +44,7 @@ void Restart()
 void setup()
 {
     Serial.begin(115200);
-    delay(3000); // wait for the monitor to reconnect after uploading.
+    delay(3000);  // wait for the monitor to reconnect after uploading.
 
     Serial.println("Creating a new self-signed certificate.");
 
@@ -50,8 +65,7 @@ void setup()
         KEYSIZE_1024,
         "CN=myesp32.local,O=pyvyx,C=DE",
         "20190101000000",
-        "20300101000000"
-    );
+        "20300101000000");
 
     // Now check if creating that worked
     if (createCertResult != 0)
@@ -101,9 +115,17 @@ void setup()
     ResourceNode* nodeGet = new ResourceNode("/", "GET", &HandleGet);
     ResourceNode* node404 = new ResourceNode("", "GET", &Handle404);
     ResourceNode* nodePost = new ResourceNode("/", "POST", &HandlePost);
+    ResourceNode* nodeGetTrackerSettingsStatus = new ResourceNode("/settings/tracker/status", "GET", &HandleGetTrackerSettingsStatus);
+    ResourceNode* nodePostTrackerSettingsApplied = new ResourceNode("/settings/tracker/applied", "GET", &HandleGetTrackerSettingsApplied);
+    ResourceNode* nodeGetTrackerSettings = new ResourceNode("/settings/tracker", "GET", &HandleGetTrackerSettings);
+    ResourceNode* nodePostTrackerSettings = new ResourceNode("/settings/tracker", "POST", &HandlePostTrackerSettings);
 
     secureServer->registerNode(nodeGet);
     secureServer->registerNode(nodePost);
+    secureServer->registerNode(nodeGetTrackerSettingsStatus);
+    secureServer->registerNode(nodePostTrackerSettingsApplied);
+    secureServer->registerNode(nodeGetTrackerSettings);
+    secureServer->registerNode(nodePostTrackerSettings);
     secureServer->setDefaultNode(node404);
     secureServer->addMiddleware(Authenticate);
 
@@ -136,42 +158,95 @@ void Authenticate(HTTPRequest* req, HTTPResponse* res, std::function<void()> nex
 }
 
 
-void HandlePost(HTTPRequest* req, HTTPResponse* res)
+bool ReadBytes(HTTPRequest* req, HTTPResponse* res, char* buffer, size_t size)
 {
-    /*
-        Structure: "battery,lat,lng,alt,kmh"
-        battery = 3 chars
-        lat = 13 chars
-        lng = 12 chars
-        alt = 5 chars
-        kmh = 4 chars
-        +4 commas
-
-        41 chars
-        example: "67,49.02536179,11.95466600,436,0"
-
-        Authentication:
-        User: login
-        Pw: 1234
-    */
-    
     size_t s = 0;
-    char buffer[dataSize+1];
-    while(s < dataSize && !req->requestComplete())
+    while (s < size && !req->requestComplete())
     {
-        s += req->readBytes((byte*)&buffer[s], dataSize-s);
-        Serial.println(s);
+        s += req->readBytes((byte*)&buffer[s], size - s);
     }
     buffer[s] = 0;
 
     if (!req->requestComplete())
     {
         req->discardRequestBody();
+        res->setStatusCode(Status::Error);
         Serial.println("Request is too long");
-        return;
+        return false;
     }
+    return true;
+}
+
+
+void HandlePost(HTTPRequest* req, HTTPResponse* res)
+{
+    /*
+        Structure: "lat,lng,alt,kmh"
+        lat = 13 chars
+        lng = 12 chars
+        alt = 5 chars
+        kmh = 4 chars
+        +3 commas
+
+        37 chars
+        example: "67,49.02536179,11.95466600,436,0"
+
+        Authentication:
+        User: login
+        Pw: 1234
+    */
+
+    char buffer[dataSize + 1];
+    if (!ReadBytes(req, res, buffer, dataSize))
+        return;
+
     memcpy(data, buffer, dataSize);
     lastSignal = millis();
+    if (settingsChanged) res->setStatusCode(Status::SettingsChanged);
+}
+
+
+void HandlePostTrackerSettings(HTTPRequest* req, HTTPResponse* res)
+{
+    /*
+        Structure: "sleep_after_send_ms,sleep_between_samples_ms,samples_before_send,sleep_for_while_no_signal"
+        max number ms: 86399000 // 23 hours, 59 minutes, 59 seconds
+
+        8 chars
+        8 chars
+        2 chars
+        8 chars
+        +3 chars comma
+        29 chars
+    */
+
+    char buffer[settingsDataSize + 1];
+    if (!ReadBytes(req, res, buffer, settingsDataSize))
+        return;
+    memcpy(settingsData, buffer, settingsDataSize);
+    settingsChanged = true;
+}
+
+
+void HandleGetTrackerSettingsApplied(HTTPRequest* req, HTTPResponse* res)
+{
+    req->discardRequestBody();
+    settingsChanged = false;
+}
+
+
+void HandleGetTrackerSettingsStatus(HTTPRequest* req, HTTPResponse* res)
+{
+    req->discardRequestBody();
+    res->setStatusCode(settingsChanged ? Status::SettingsPending : Status::SettingsApplied);
+}
+
+
+void HandleGetTrackerSettings(HTTPRequest* req, HTTPResponse* res)
+{
+    req->discardRequestBody();
+    res->setHeader("Content-Type", "text/plain");
+    res->printf("%s", settingsData);
 }
 
 
@@ -185,7 +260,7 @@ void HandleGet(HTTPRequest* req, HTTPResponse* res)
 
 void Handle404(HTTPRequest* req, HTTPResponse* res)
 {
-    res->setStatusCode(201);
+    res->setStatusCode(Status::Error);
     req->discardRequestBody();
     delay(random(1000, 30000));
 }
