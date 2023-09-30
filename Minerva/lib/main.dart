@@ -315,7 +315,7 @@ class _HomeState extends State<Home>
                   ),
                   MarkerLayer(
                     markers: [
-                      Marker(rotate: false, point: LatLng(_Latitude, _Longitude), builder: (ctx) => CupertinoButton(onPressed: _ShowInfoSection, padding: EdgeInsets.zero, child: const Icon(Icons.directions_car)))
+                      Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => CupertinoButton(onPressed: _ShowInfoSection, padding: EdgeInsets.zero, child: const Icon(Icons.directions_car)))
                     ]
                   )
                 ],
