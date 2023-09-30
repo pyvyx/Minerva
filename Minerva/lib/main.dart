@@ -342,7 +342,16 @@ class _HomeState extends State<Home>
                     tileProvider: FMTC.instance('mapStore').getTileProvider(),
                     maxNativeZoom: Settings.zoomList[Settings.maxNativeZoom],
                     minNativeZoom: Settings.zoomList[Settings.minNativeZoom],
-                    urlTemplate: Settings.MapProviderLink()
+                    urlTemplate: Settings.MapProviderLink(),
+                    tileBuilder: !Settings.darkMode ? null : (BuildContext context, Widget tileWidget, TileImage tile) {
+                      return ColorFiltered(colorFilter: const ColorFilter.matrix(<double>[
+                          0.2126, 0.7152, 0.0722, 0, 0,
+                          0.2126, 0.7152, 0.0722, 0, 0,
+                          0.2126, 0.7152, 0.0722, 0, 0,
+                          0,      0,      0,      1, 0,
+                      ]),
+                      child: tileWidget);
+                    },
                   ),
                   MarkerLayer(
                     markers: [
@@ -410,7 +419,7 @@ class Settings
   static bool darkModeApp = true;
 
   // map settings
-  static bool darkMode = true;
+  static bool darkMode = false;
   static int mapProvider = 0; // 0 = open street map, 1 = google maps
   static bool mapRotation = false;
   static int maxZoom = 17;
