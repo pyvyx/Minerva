@@ -397,6 +397,12 @@ class Settings
         return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; //subdomains: ['a', 'b', 'c'],
     }
   }
+
+  // tracker settings
+  static Duration sleepAfterSend = Duration(seconds: 45);
+  static Duration sleepBetweenSamples = Duration(seconds: 1);
+  static int samplesBeforeSend = 2;
+  static List<int> samplesList = List<int>.generate(60, (i) => i + 1);
 }
 
 
@@ -466,9 +472,8 @@ class _SettingsPageState extends State<SettingsPage>
   }
 
 
-  Future<int> _NumberPicker(int idx) async
+  Future<int> _NumberPicker(int idx, List<int> list) async
   {
-    int num = idx;
     await _ShowDialog(CupertinoPicker(
       magnification: 1.22,
       squeeze: 1.2,
@@ -477,16 +482,31 @@ class _SettingsPageState extends State<SettingsPage>
       scrollController: FixedExtentScrollController(initialItem: idx),
       onSelectedItemChanged: (int selectedItem) {
         setState(() {
-          num = selectedItem;
+          idx = selectedItem;
         });
       },
       children:
-      List<Widget>.generate(Settings.zoomList.length, (int index) {
-        return Center(child: Text(Settings.zoomList[index].toString()));
+      List<Widget>.generate(list.length, (int index) {
+        return Center(child: Text(list[index].toString()));
       }),
       ),
     );
-    return num;
+    return idx;
+  }
+
+
+  Future<Duration> _TimerPicker(Duration duration) async
+  {
+    await _ShowDialog(
+      CupertinoTimerPicker(
+        mode: CupertinoTimerPickerMode.hms,
+        initialTimerDuration: duration,
+        onTimerDurationChanged: (Duration newDuration) {
+          setState(() => duration = newDuration);
+        },
+      ),
+    );
+    return duration;
   }
 
 
@@ -531,28 +551,54 @@ class _SettingsPageState extends State<SettingsPage>
                   title: const Text("Max zoom"),
                   leading: const Icon(CupertinoIcons.zoom_in),
                   value: Text(Settings.zoomList[Settings.maxZoom].toString()),
-                  onPressed: (context) => _NumberPicker(Settings.maxZoom).then((value) => setState(() { Settings.minZoom = value < Settings.minZoom ? value : Settings.minZoom; Settings.maxZoom = value; })),
+                  onPressed: (context) => _NumberPicker(Settings.maxZoom, Settings.zoomList).then((value) => setState(() { Settings.minZoom = value < Settings.minZoom ? value : Settings.minZoom; Settings.maxZoom = value; })),
                 ),
 
                 SettingsTile.navigation(
                   title: const Text("Min zoom"),
                   leading: const Icon(CupertinoIcons.zoom_out),
                   value: Text(Settings.zoomList[Settings.minZoom].toString()),
-                  onPressed: (context) => _NumberPicker(Settings.minZoom).then((value) => setState(() { Settings.maxZoom = value > Settings.maxZoom ? value : Settings.maxZoom; Settings.minZoom = value; })),
+                  onPressed: (context) => _NumberPicker(Settings.minZoom, Settings.zoomList).then((value) => setState(() { Settings.maxZoom = value > Settings.maxZoom ? value : Settings.maxZoom; Settings.minZoom = value; })),
                 ),
 
                 SettingsTile.navigation(
                   title: const Text("Max native zoom"),
                   leading: const Icon(CupertinoIcons.zoom_in),
                   value: Text(Settings.zoomList[Settings.maxNativeZoom].toString()),
-                  onPressed: (context) => _NumberPicker(Settings.maxNativeZoom).then((value) => setState(() { Settings.minNativeZoom = value < Settings.minNativeZoom ? value : Settings.minNativeZoom; Settings.maxNativeZoom = value; })),
+                  onPressed: (context) => _NumberPicker(Settings.maxNativeZoom, Settings.zoomList).then((value) => setState(() { Settings.minNativeZoom = value < Settings.minNativeZoom ? value : Settings.minNativeZoom; Settings.maxNativeZoom = value; })),
                 ),
 
                 SettingsTile.navigation(
                   title: const Text("Min native zoom"),
                   leading: const Icon(CupertinoIcons.zoom_out),
                   value: Text(Settings.zoomList[Settings.minNativeZoom].toString()),
-                  onPressed: (context) => _NumberPicker(Settings.minNativeZoom).then((value) => setState(() { Settings.maxNativeZoom = value > Settings.maxNativeZoom ? value : Settings.maxNativeZoom; Settings.minNativeZoom = value; })),
+                  onPressed: (context) => _NumberPicker(Settings.minNativeZoom, Settings.zoomList).then((value) => setState(() { Settings.maxNativeZoom = value > Settings.maxNativeZoom ? value : Settings.maxNativeZoom; Settings.minNativeZoom = value; })),
+                )
+              ],
+            ),
+
+            SettingsSection(
+              title: const Text("Tracker"),
+              tiles: <SettingsTile>[
+                SettingsTile.navigation(
+                  title: const Text("Sleep after send"),
+                  leading: const Icon(CupertinoIcons.time_solid),
+                  value: Text(Settings.sleepAfterSend.toString().split(".")[0]),
+                  onPressed: (context) => _TimerPicker(Settings.sleepAfterSend).then((value) => setState(() => Settings.sleepAfterSend = value))
+                ),
+
+                SettingsTile.navigation(
+                    title: const Text("Sleep between samples"),
+                    leading: const Icon(CupertinoIcons.time_solid),
+                    value: Text(Settings.sleepBetweenSamples.toString().split(".")[0]),
+                    onPressed: (context) => _TimerPicker(Settings.sleepBetweenSamples).then((value) => setState(() => Settings.sleepBetweenSamples = value))
+                ),
+
+                SettingsTile.navigation(
+                  title: const Text("Samples"),
+                  leading: const Icon(CupertinoIcons.archivebox_fill),
+                  value: Text(Settings.samplesList[Settings.samplesBeforeSend].toString()),
+                  onPressed: (context) => _NumberPicker(Settings.samplesBeforeSend, Settings.samplesList).then((value) => setState(() { Settings.samplesBeforeSend = value; })),
                 )
               ],
             )
@@ -576,6 +622,7 @@ class _SettingsPageState extends State<SettingsPage>
   -- map rotation
 
   Tracker:
-  how long to sleep after send
-  coordinate samples to gather before sending
+  -- how long to sleep after send
+  -- time to sleep between samples
+  -- coordinate samples to gather before sending
 */
