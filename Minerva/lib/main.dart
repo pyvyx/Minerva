@@ -245,7 +245,7 @@ class _HomeState extends State<Home>
         Structure: "battery,time_since_last_update,lat,lng,alt,kmh"
         example: "56,3000,49.02536179,11.95466600,436,10"
 
-        TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker), battery percentage
+        TODO: alt as int (in tracker), kmh as int (in tracker), battery percentage
         TODO: server doesn't need to keep old pos, app is responsible for it
 
         Authentication:
@@ -436,6 +436,7 @@ class Settings
     switch(mapProvider)
     {
       case 1:
+        // "http://gsp2.apple.com/tile?api=1&style=slideshow&layers=default&lang=en_US&z={z}&x={x}&y={y}&v=9"
         return "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}";
       default:
         return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; //subdomains: ['a', 'b', 'c'],
@@ -443,8 +444,8 @@ class Settings
   }
 
   // tracker settings
-  static Duration sleepAfterSend = Duration(seconds: 45);
-  static Duration sleepBetweenSamples = Duration(seconds: 1);
+  static Duration sleepAfterSend = const Duration(seconds: 45);
+  static Duration sleepBetweenSamples = const Duration(seconds: 1);
   static int samplesBeforeSend = 2;
   static List<int> samplesList = List<int>.generate(60, (i) => i + 1);
 }
