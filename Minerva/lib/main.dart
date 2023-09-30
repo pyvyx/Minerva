@@ -446,6 +446,7 @@ class Settings
   // tracker settings
   static Duration sleepAfterSend = const Duration(seconds: 45);
   static Duration sleepBetweenSamples = const Duration(seconds: 1);
+  static Duration sleepWhileNoSignal = const Duration(seconds: 3);
   static int samplesBeforeSend = 2;
   static List<int> samplesList = List<int>.generate(60, (i) => i + 1);
 }
@@ -665,6 +666,13 @@ class _SettingsPageState extends State<SettingsPage>
                   leading: const Icon(CupertinoIcons.archivebox_fill),
                   value: Text(Settings.samplesList[Settings.samplesBeforeSend].toString()),
                   onPressed: (context) => _NumberPicker(Settings.samplesBeforeSend, Settings.samplesList).then((value) => setState(() { Settings.samplesBeforeSend = value; })),
+                ),
+
+                SettingsTile.navigation(
+                    title: const Text("Sleep while no signal"),
+                    leading: const Icon(CupertinoIcons.time_solid),
+                    value: Text(Settings.sleepWhileNoSignal.toString().split(".")[0]),
+                    onPressed: (context) => _TimerPicker(Settings.sleepWhileNoSignal).then((value) => setState(() => Settings.sleepWhileNoSignal = value))
                 )
               ],
             )
