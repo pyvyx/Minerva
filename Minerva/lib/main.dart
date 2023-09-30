@@ -209,7 +209,7 @@ class _HomeState extends State<Home>
       final double lat = double.parse(split[2]);
       final double lng = double.parse(split[3]);
 
-      int tmp = _Stopwatch.elapsedMilliseconds;
+      int tmp = _Stopwatch.elapsedMilliseconds; // TODO won't update because it's a string
       _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[1]) + tmp);
       _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
       _Stopwatch.reset();
