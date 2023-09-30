@@ -77,7 +77,7 @@ class _HomeState extends State<Home>
   double _Longitude = 0;
   int _Altitude = 0;
   int _Speed = 0;
-  int battery = 0;
+  int _Battery = 0;
   String _TimeSinceLastTrackerSignal = "Never";
   String _TimeSinceLastServerUpdate = "Never";
   final Stopwatch _Stopwatch = Stopwatch()..start();
@@ -206,13 +206,14 @@ class _HomeState extends State<Home>
 
     try
     {
-      final double lat = double.parse(split[1]);
-      final double lng = double.parse(split[2]);
+      final double lat = double.parse(split[2]);
+      final double lng = double.parse(split[3]);
 
       int tmp = _Stopwatch.elapsedMilliseconds;
-      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]) + tmp);
+      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[1]) + tmp);
       _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
       _Stopwatch.reset();
+      _Battery = int.parse(split[0]);
 
       if (lat != _Latitude || lng != _Longitude)
       {
@@ -222,8 +223,8 @@ class _HomeState extends State<Home>
         setState(() {
           _Latitude = lat;
           _Longitude = lng;
-          _Altitude = int.parse(split[3]);
-          _Speed = int.parse(split[4]);
+          _Altitude = int.parse(split[4]);
+          _Speed = int.parse(split[5]);
         });
       }
     }
@@ -241,8 +242,8 @@ class _HomeState extends State<Home>
   void _Request()
   {
     /*
-        Structure: "time_since_last_update,lat,lng,alt,kmh"
-        example: "3000,49.02536179,11.95466600,436,10"
+        Structure: "battery,time_since_last_update,lat,lng,alt,kmh"
+        example: "56,3000,49.02536179,11.95466600,436,10"
 
         TODO: alt as int (in tracker), kmh as int and if less then 15 = 0 (in tracker), battery percentage
         TODO: server doesn't need to keep old pos, app is responsible for it
@@ -300,7 +301,7 @@ class _HomeState extends State<Home>
                     Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))))
                   ]),
 
-                  Text("\nBattery: $battery%", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
+                  Text("\nBattery: $_Battery%", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
                   Text("Time since last tracker signal: $_TimeSinceLastTrackerSignal", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
                   Text("Time since last server update: $_TimeSinceLastServerUpdate", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))
                 ]),
