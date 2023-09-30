@@ -226,7 +226,7 @@ class _HomeState extends State<Home>
         Pw: 1234
     */
 
-    http.get(Uri.parse('https://${Settings.serverIp}'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((e){_ShowError(context, "Failed to get information: ${e.toString()}");});
+    http.get(Uri.parse('https://${Settings.serverIp}'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode(Settings.serverAuth))}'}).then(_ParseBody).catchError((e){_ShowError(context, "Failed to get information: ${e.toString()}");});
   }
 
 
@@ -468,7 +468,7 @@ class Settings
   {
     try
     {
-      await http.post(Uri.parse('https://${Settings.serverIp}/settings/tracker'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}, body: _BuildTrackerBody());
+      await http.post(Uri.parse('https://${Settings.serverIp}/settings/tracker'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode(Settings.serverAuth))}'}, body: _BuildTrackerBody());
       updateTracker = false;
       trackerApproved = false;
     }
@@ -480,6 +480,7 @@ class Settings
 
   // server settings
   static String serverIp = "192.168.178.90";
+  static String serverAuth = "login:1234";
 }
 
 
@@ -730,7 +731,7 @@ class _SettingsPageState extends State<SettingsPage>
 
   Future<void> _MakeRequest() async
   {
-    http.get(Uri.parse('https://${Settings.serverIp}/settings/tracker/status'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then((response) {
+    http.get(Uri.parse('https://${Settings.serverIp}/settings/tracker/status'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode(Settings.serverAuth))}'}).then((response) {
       setState(() {
         Settings.trackerApproved = response.statusCode == 203;
       });
@@ -738,7 +739,7 @@ class _SettingsPageState extends State<SettingsPage>
     }).catchError((e){_ShowError(context, "Failed to get settings status: ${e.toString()}");});
 
     _RequestTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
-      http.get(Uri.parse('https://${Settings.serverIp}/settings/tracker/status'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then((response) {
+      http.get(Uri.parse('https://${Settings.serverIp}/settings/tracker/status'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode(Settings.serverAuth))}'}).then((response) {
         setState(() {
           Settings.trackerApproved = response.statusCode == 203;
         });
