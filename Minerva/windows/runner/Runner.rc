@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.pyvyx" "\0"
-            VALUE "FileDescription", "watchdog" "\0"
+            VALUE "FileDescription", "minerva" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "watchdog" "\0"
+            VALUE "InternalName", "minerva" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 com.pyvyx. All rights reserved." "\0"
-            VALUE "OriginalFilename", "watchdog.exe" "\0"
-            VALUE "ProductName", "watchdog" "\0"
+            VALUE "OriginalFilename", "minerva.exe" "\0"
+            VALUE "ProductName", "minerva" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

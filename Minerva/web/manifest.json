@@ -1,6 +1,6 @@
 {
-    "name": "watchdog",
-    "short_name": "watchdog",
+    "name": "minerva",
+    "short_name": "minerva",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

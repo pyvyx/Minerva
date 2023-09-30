@@ -1,4 +1,4 @@
-package com.pyvyx.watchdog
+package com.pyvyx.minerva
 
 import io.flutter.embedding.android.FlutterActivity
 
