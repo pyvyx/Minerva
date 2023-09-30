@@ -379,7 +379,7 @@ class Settings
 {
   // map settings
   static bool darkMode = true;
-  static int mapProvider = 0; // 0 = open street map, 1 = google maps, 2 = none
+  static int mapProvider = 0; // 0 = open street map, 1 = google maps
   static bool mapRotation = false;
   static int maxZoom = 17;
   static int minZoom = 0;
@@ -391,12 +391,10 @@ class Settings
   {
     switch(mapProvider)
     {
-      case 0:
-        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; //subdomains: ['a', 'b', 'c'],
       case 1:
         return "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}";
       default:
-        return "";
+        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; //subdomains: ['a', 'b', 'c'],
     }
   }
 }
@@ -437,14 +435,7 @@ class _SettingsPageState extends State<SettingsPage>
               Navigator.pop(context);
             },
             child: const Text('Google Maps'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Settings.mapProvider = 2;
-              Navigator.pop(context);
-            },
-            child: const Text('None'),
-          ),
+          )
         ],
       ),
     );
@@ -518,7 +509,7 @@ class _SettingsPageState extends State<SettingsPage>
                 SettingsTile.navigation(
                   title: const Text("Map provider"),
                   leading: const Icon(CupertinoIcons.map),
-                  value: Text(Settings.mapProvider == 0 ? "OpenStreetMap" : Settings.mapProvider == 1 ? "Google Maps" : "None"),
+                  value: Text(Settings.mapProvider == 0 ? "OpenStreetMap" : "Google Maps"),
                   onPressed: (context) => _SelectMapProvider(context),
                 ),
 
