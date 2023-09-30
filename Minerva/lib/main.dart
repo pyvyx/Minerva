@@ -218,18 +218,15 @@ class _HomeState extends State<Home>
   void _Request()
   {
     /*
-        Structure: "battery,time_since_last_update,lat,lng,alt,kmh"
-        example: "56,3000,49.02536179,11.95466600,436,10"
-
-        TODO: alt as int (in tracker), kmh as int (in tracker), battery percentage
-        TODO: server doesn't need to keep old pos, app is responsible for it
+        Structure: "time_since_last_update,lat,lng,alt,kmh"
+        example: "3000,49.02536179,11.95466600,436,10"
 
         Authentication:
         User: login
         Pw: 1234
     */
 
-    http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((e){_ShowError(context, "Failed to get information: ${e.toString()}");});
+    http.get(Uri.parse('https://${Settings.serverIp}'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((e){_ShowError(context, "Failed to get information: ${e.toString()}");});
   }
 
 
@@ -471,7 +468,7 @@ class Settings
   {
     try
     {
-      await http.post(Uri.parse('https://192.168.178.90/settings/tracker'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}, body: _BuildTrackerBody());
+      await http.post(Uri.parse('https://${Settings.serverIp}/settings/tracker'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}, body: _BuildTrackerBody());
       updateTracker = false;
       trackerApproved = false;
     }
