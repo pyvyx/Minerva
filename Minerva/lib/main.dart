@@ -77,7 +77,6 @@ class _HomeState extends State<Home>
   double _Longitude = 0;
   int _Altitude = 0;
   int _Speed = 0;
-  int _Battery = 0;
   String _TimeSinceLastTrackerSignal = "Never";
   String _TimeSinceLastServerUpdate = "Never";
   final Stopwatch _Stopwatch = Stopwatch()..start();
@@ -175,7 +174,7 @@ class _HomeState extends State<Home>
     showCupertinoModalPopup<void>(
       context: context,
       builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Alert', style: TextStyle(color: Colors.black)),
+        title: const Text('Alert'),
         actions: [
           Center(child: Text(msg, style: TextStyle(color: Colors.red[600])))
         ]
@@ -206,25 +205,23 @@ class _HomeState extends State<Home>
 
     try
     {
-      final double lat = double.parse(split[2]);
-      final double lng = double.parse(split[3]);
+      final double lat = double.parse(split[1]);
+      final double lng = double.parse(split[2]);
 
       int tmp = _Stopwatch.elapsedMilliseconds; // TODO won't update because it's a string
-      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[1]) + tmp);
+      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]) + tmp);
       _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
       _Stopwatch.reset();
-      _Battery = int.parse(split[0]);
 
       if (lat != _Latitude || lng != _Longitude)
       {
         // Will always update the first time because _Latitude = 0 and _Longitude = 0
         // that's a point in the golf of guinea
-        print("Update");
         setState(() {
           _Latitude = lat;
           _Longitude = lng;
-          _Altitude = int.parse(split[4]);
-          _Speed = int.parse(split[5]);
+          _Altitude = int.parse(split[3]);
+          _Speed = int.parse(split[4]);
         });
       }
     }
@@ -301,8 +298,7 @@ class _HomeState extends State<Home>
                     Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))))
                   ]),
 
-                  Text("\nBattery: $_Battery%", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
-                  Text("Time since last tracker signal: $_TimeSinceLastTrackerSignal", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
+                  Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
                   Text("Time since last server update: $_TimeSinceLastServerUpdate", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))
                 ]),
             onPressed: () => _Request(),
