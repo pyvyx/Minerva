@@ -160,29 +160,8 @@ class _HomeState extends State<Home>
     }
     else
     {
-      _ShowError("Could not open the map");
+      _ShowError(context, "Could not open the map");
     }
-  }
-
-
-  void _ShowError(String msg)
-  {
-    Timer? timer = Timer(Duration(milliseconds: 2500), () {
-      Navigator.of(context, rootNavigator: true).pop();
-    });
-
-    showCupertinoModalPopup<void>(
-      context: context,
-      builder: (BuildContext context) => CupertinoActionSheet(
-        title: const Text('Alert'),
-        actions: [
-          Center(child: Text(msg, style: TextStyle(color: Colors.red[600])))
-        ]
-      ),
-    ).then((value) {
-      timer?.cancel();
-      timer = null;
-    });
   }
 
 
@@ -199,7 +178,7 @@ class _HomeState extends State<Home>
     List<String> split = response.body.split(",");
     if (split.length != 5)
     {
-      _ShowError("Result is not properly formatted");
+      _ShowError(context, "Result is not properly formatted");
       return;
     }
 
@@ -227,11 +206,11 @@ class _HomeState extends State<Home>
     }
     on FormatException catch (e)
     {
-      _ShowError("Failed to parse parameter: '${e.source}' ${e.message}");
+      _ShowError(context, "Failed to parse parameter: '${e.source}' ${e.message}");
     }
     catch(e)
     {
-      _ShowError("Unknown exception: ${e.toString()}");
+      _ShowError(context, "Unknown exception: ${e.toString()}");
     }
   }
 
@@ -250,7 +229,7 @@ class _HomeState extends State<Home>
         Pw: 1234
     */
 
-    http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((e){_ShowError("Failed to get information: ${e.toString()}");});
+    http.get(Uri.parse('https://192.168.178.90'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}).then(_ParseBody).catchError((e){_ShowError(context, "Failed to get information: ${e.toString()}");});
   }
 
 
@@ -394,6 +373,27 @@ class _HomeState extends State<Home>
 }
 
 
+void _ShowError(BuildContext context, String msg)
+{
+  Timer? timer = Timer(Duration(milliseconds: 2500), () {
+    Navigator.of(context, rootNavigator: true).pop();
+  });
+
+  showCupertinoModalPopup<void>(
+    context: context,
+    builder: (BuildContext context) => CupertinoActionSheet(
+        title: const Text('Alert'),
+        actions: [
+          Center(child: Text(msg, style: TextStyle(color: Colors.red[600])))
+        ]
+    ),
+  ).then((value) {
+    //timer?.cancel();
+    //timer = null;
+  });
+}
+
+
 /*
   https://github.com/fleaflet/flutter_map/issues/1058
   Ok, so here is the base URL:
@@ -444,11 +444,42 @@ class Settings
   }
 
   // tracker settings
-  static Duration sleepAfterSend = const Duration(seconds: 45);
-  static Duration sleepBetweenSamples = const Duration(seconds: 1);
-  static Duration sleepWhileNoSignal = const Duration(seconds: 3);
-  static int samplesBeforeSend = 2;
+  static bool updateTracker = false;
+  static Duration sleepAfterSendVar = const Duration(seconds: 45);
+  static Duration sleepBetweenSamplesVar = const Duration(seconds: 1);
+  static Duration sleepWhileNoSignalVar = const Duration(seconds: 3);
+  static int samplesBeforeSendVar = 2;
   static List<int> samplesList = List<int>.generate(60, (i) => i + 1);
+
+  static void set sleepAfterSend(Duration s) { updateTracker = true; sleepAfterSendVar = s; }
+  static void set sleepBetweenSamples(Duration s) { updateTracker = true; sleepBetweenSamplesVar = s; }
+  static void set sleepWhileNoSignal(Duration s) { updateTracker = true; sleepWhileNoSignalVar = s; }
+  static void set samplesBeforeSend(int s) { updateTracker = true; samplesBeforeSendVar = s; }
+
+  static Duration get sleepAfterSend => sleepAfterSendVar;
+  static Duration get sleepBetweenSamples => sleepBetweenSamplesVar;
+  static Duration get sleepWhileNoSignal => sleepWhileNoSignalVar;
+  static int get samplesBeforeSend => samplesBeforeSendVar;
+
+  static String _BuildTrackerBody()
+  {
+    return sleepAfterSendVar.inMilliseconds.toString() + "," + sleepBetweenSamplesVar.inMilliseconds.toString() + "," + samplesList[samplesBeforeSendVar].toString() + "," + sleepWhileNoSignalVar.inMilliseconds.toString();
+  }
+
+  static Future<void> UpdateTracker(BuildContext context) async
+  {
+    if (!updateTracker) return;
+
+    try
+    {
+      await http.post(Uri.parse('https://192.168.178.90/settings/tracker'), headers: {"authorization": 'Basic ${base64.encode(ascii.encode("login:1234"))}'}, body: _BuildTrackerBody()).then((e) => updateTracker = false);
+    }
+    catch (e)
+    {
+      _ShowError(context, "Failed to post tracker settings: ${e.toString()}");
+      updateTracker = false;
+    }
+  }
 }
 
 
@@ -570,7 +601,7 @@ class _SettingsPageState extends State<SettingsPage>
   {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () { Navigator.pop(context); updateHomePage(1); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
+        leading: CupertinoButton(onPressed: () { Settings.UpdateTracker(context).then((v) {Navigator.pop(context); updateHomePage(1);}); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
         middle: const Text("Settings"),
       ),
       child: SafeArea(
