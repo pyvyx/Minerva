@@ -308,10 +308,7 @@ class _HomeState extends State<Home>
                   TileLayer(
                     maxNativeZoom: Settings.zoomList[Settings.maxNativeZoom],
                     minNativeZoom: Settings.zoomList[Settings.minNativeZoom],
-                    urlTemplate: ""
-                    //urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    //subdomains: ['a', 'b', 'c'],
-                    //urlTemplate: "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}",
+                    urlTemplate: Settings.MapProviderLink()
                   ),
                   MarkerLayer(
                     markers: [
@@ -384,6 +381,19 @@ class Settings
   static int maxNativeZoom = 10;
   static int minNativeZoom = 0;
   static List<int> zoomList = List<int>.generate(18, (i) => i + 1);
+
+  static String MapProviderLink()
+  {
+    switch(mapProvider)
+    {
+      case 0:
+        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'; //subdomains: ['a', 'b', 'c'],
+      case 1:
+        return "https://mt0.google.com/vt/lyrs=m@221097413&x={x}&y={y}&z={z}";
+      default:
+        return "";
+    }
+  }
 }
 
 
