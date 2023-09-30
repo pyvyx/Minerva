@@ -77,8 +77,8 @@ class _HomeState extends State<Home>
   double _Longitude = 0;
   int _Altitude = 0;
   int _Speed = 0;
-  String _TimeSinceLastTrackerSignal = "Never";
-  String _TimeSinceLastServerUpdate = "Never";
+  int _TimeSinceLastTrackerSignal = 0;
+  int _TimeSinceLastServerUpdate = 0;
   final Stopwatch _Stopwatch = Stopwatch()..start();
 
   Future<void> _OpenMapMobile(double latitude, double longitude) async
@@ -208,9 +208,9 @@ class _HomeState extends State<Home>
       final double lat = double.parse(split[1]);
       final double lng = double.parse(split[2]);
 
-      int tmp = _Stopwatch.elapsedMilliseconds; // TODO won't update because it's a string
-      _TimeSinceLastTrackerSignal = _TimeAsString(int.parse(split[0]) + tmp);
-      _TimeSinceLastServerUpdate = _TimeAsString(_Stopwatch.elapsedMilliseconds);
+      int tmp = _Stopwatch.elapsedMilliseconds;
+      _TimeSinceLastTrackerSignal = int.parse(split[0]) + tmp;
+      _TimeSinceLastServerUpdate = tmp;
       _Stopwatch.reset();
 
       if (lat != _Latitude || lng != _Longitude)
@@ -256,6 +256,10 @@ class _HomeState extends State<Home>
 
   void _ShowInfoSection()
   {
+    _TimeSinceLastTrackerSignal += _Stopwatch.elapsedMilliseconds;
+    _TimeSinceLastServerUpdate += _Stopwatch.elapsedMilliseconds;
+    _Stopwatch.reset();
+    
     showCupertinoModalPopup<void>(context: context, builder: (BuildContext context)
     {
       return CupertinoActionSheet(
@@ -298,8 +302,8 @@ class _HomeState extends State<Home>
                     Expanded(child: Align(alignment: Alignment.centerLeft, child: Text("$_Speed km/h", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))))
                   ]),
 
-                  Text("\nTime since last tracker signal: $_TimeSinceLastTrackerSignal", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
-                  Text("Time since last server update: $_TimeSinceLastServerUpdate", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))
+                  Text("\nTime since last tracker signal: ${_TimeAsString(_TimeSinceLastTrackerSignal)}", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color)),
+                  Text("Time since last server update: ${_TimeAsString(_TimeSinceLastServerUpdate)}", style: TextStyle(color: CupertinoTheme.of(context).textTheme.textStyle.color))
                 ]),
             onPressed: () => _Request(),
           ),
