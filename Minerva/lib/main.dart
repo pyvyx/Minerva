@@ -119,7 +119,7 @@ class _HomeState extends State<Home>
 
     showCupertinoModalPopup<void>(context: context, builder: (BuildContext context)
     {
-      return CupertinoActionSheet(title: const Text("Information", style: TextStyle(color: Colors.black)), actions: actions);
+      return CupertinoActionSheet(title: const Text("Information"), actions: actions);
     });
 
     // old version
