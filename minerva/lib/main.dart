@@ -660,7 +660,7 @@ class _SettingsPageState extends State<SettingsPage>
     await showCupertinoModalPopup<void>(
       context: context,
       builder: (BuildContext context) => Container(
-        height: 216,
+        height: 300,
         padding: const EdgeInsets.only(top: 6.0),
         // The Bottom margin is provided to align the popup above the system navigation bar.
         margin: EdgeInsets.only(
