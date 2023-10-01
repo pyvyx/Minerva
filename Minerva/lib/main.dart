@@ -200,7 +200,7 @@ class _HomeState extends State<Home>
           _Latitude = lat;
           _Longitude = lng;
           _Altitude = int.parse(split[3]);
-          _Speed = int.parse(split[4]);
+          _Speed = int.parse(split[4]) < 10 ? 0 : int.parse(split[4]);
         });
       }
     }
@@ -335,7 +335,7 @@ class _HomeState extends State<Home>
                   ),
                   MarkerLayer(
                     markers: [
-                      Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => CupertinoButton(onPressed: _ShowInfoSection, padding: EdgeInsets.zero, child: const Icon(Icons.directions_car)))
+                      Marker(rotate: true, point: LatLng(_Latitude, _Longitude), builder: (ctx) => CupertinoButton(color: Colors.deepOrangeAccent, onPressed: _ShowInfoSection, padding: EdgeInsets.zero, child: Icon(Icons.directions_car, color: Colors.grey[400])))
                     ]
                   )
                 ],
