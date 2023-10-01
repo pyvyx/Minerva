@@ -75,8 +75,8 @@ class _HomeState extends State<Home>
   final ValueChanged updateApp;
   _HomeState({required this.updateApp});
 
-  double _Latitude = 0;
-  double _Longitude = 0;
+  double _Latitude = 52.520008;
+  double _Longitude = 13.404954;
   int _Altitude = 0;
   int _Speed = 0;
   int _TimeSinceLastTrackerSignal = 0;
@@ -316,7 +316,7 @@ class _HomeState extends State<Home>
                   maxZoom: Settings.zoomList[Settings.maxZoom].toDouble(),
                   minZoom: Settings.zoomList[Settings.minZoom].toDouble(),
                   center: LatLng(_Latitude, _Longitude),
-                  zoom: 8,
+                  zoom: 14,
                   interactiveFlags: Settings.mapRotation ? InteractiveFlag.all : InteractiveFlag.all & ~InteractiveFlag.rotate
                 ),
                 children: [
