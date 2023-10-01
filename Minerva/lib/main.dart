@@ -298,6 +298,7 @@ class _HomeState extends State<Home>
   @override
   Widget build(BuildContext context)
   {
+    if (Settings.serverRequestChanged) { _MakeRequest(); Settings.serverRequestChanged = false; }
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
@@ -346,27 +347,28 @@ class _HomeState extends State<Home>
     );
   }
 
-  // TODO: unmark
-  //Timer? _RequestTimer;
-  //@override
-  //void initState()
-  //{
-  //  _MakeRequest();
-  //}
-  //
-  //Future<void> _MakeRequest() async
-  //{
-  //  _RequestTimer = Timer.periodic(const Duration(seconds: 45), (timer) {
-  //    _Request();//
-  //  });
-  //}
-//
-  //@override
-  //void dispose()
-  //{
-  //  _RequestTimer?.cancel();
-  //  super.dispose();
-  //}
+
+  Timer? _RequestTimer;
+  @override
+  void initState()
+  {
+    _MakeRequest();
+  }
+
+  Future<void> _MakeRequest() async
+  {
+    _Request();
+    _RequestTimer = Timer.periodic(Settings.serverRequestVar, (timer) {
+      _Request();
+    });
+  }
+
+  @override
+  void dispose()
+  {
+    _RequestTimer?.cancel();
+    super.dispose();
+  }
 }
 
 
@@ -419,6 +421,11 @@ class Settings
 {
   // app settings
   static bool darkModeApp = true;
+  static Duration serverRequestVar = const Duration(seconds: 45);
+  static bool serverRequestChanged = false;
+
+  static set serverRequest(Duration d) { serverRequestVar = d; serverRequestChanged = true; }
+  static Duration get serverRequest => serverRequestVar;
 
   // map settings
   static bool darkMode = false;
@@ -621,6 +628,13 @@ class _SettingsPageState extends State<SettingsPage>
                     leading: Icon(Settings.darkModeApp ? Icons.dark_mode : Icons.sunny),
                     initialValue: Settings.darkModeApp
                 ),
+
+                SettingsTile.navigation(
+                    title: const Text("Server request"),
+                    leading: const Icon(CupertinoIcons.time_solid),
+                    value: Text(Settings.serverRequestVar.toString().split(".")[0]),
+                    onPressed: (context) => _TimerPicker(Settings.serverRequestVar).then((value) => setState(() => Settings.serverRequest = value))
+                )
               ]
             ),
 
@@ -691,29 +705,29 @@ class _SettingsPageState extends State<SettingsPage>
                 SettingsTile.navigation(
                   title: const Text("Sleep after send"),
                   leading: const Icon(CupertinoIcons.time_solid),
-                  value: Text(Settings.sleepAfterSend.toString().split(".")[0]),
-                  onPressed: (context) => _TimerPicker(Settings.sleepAfterSend).then((value) => setState(() => Settings.sleepAfterSend = value))
+                  value: Text(Settings.sleepAfterSendVar.toString().split(".")[0]),
+                  onPressed: (context) => _TimerPicker(Settings.sleepAfterSendVar).then((value) => setState(() => Settings.sleepAfterSend = value))
                 ),
 
                 SettingsTile.navigation(
                     title: const Text("Sleep between samples"),
                     leading: const Icon(CupertinoIcons.time_solid),
-                    value: Text(Settings.sleepBetweenSamples.toString().split(".")[0]),
-                    onPressed: (context) => _TimerPicker(Settings.sleepBetweenSamples).then((value) => setState(() => Settings.sleepBetweenSamples = value))
+                    value: Text(Settings.sleepBetweenSamplesVar.toString().split(".")[0]),
+                    onPressed: (context) => _TimerPicker(Settings.sleepBetweenSamplesVar).then((value) => setState(() => Settings.sleepBetweenSamples = value))
                 ),
 
                 SettingsTile.navigation(
                   title: const Text("Samples"),
                   leading: const Icon(CupertinoIcons.archivebox_fill),
-                  value: Text(Settings.samplesList[Settings.samplesBeforeSend].toString()),
-                  onPressed: (context) => _NumberPicker(Settings.samplesBeforeSend, Settings.samplesList).then((value) => setState(() { Settings.samplesBeforeSend = value; })),
+                  value: Text(Settings.samplesList[Settings.samplesBeforeSendVar].toString()),
+                  onPressed: (context) => _NumberPicker(Settings.samplesBeforeSendVar, Settings.samplesList).then((value) => setState(() { Settings.samplesBeforeSend = value; })),
                 ),
 
                 SettingsTile.navigation(
                     title: const Text("Sleep while no signal"),
                     leading: const Icon(CupertinoIcons.time_solid),
-                    value: Text(Settings.sleepWhileNoSignal.toString().split(".")[0]),
-                    onPressed: (context) => _TimerPicker(Settings.sleepWhileNoSignal).then((value) => setState(() => Settings.sleepWhileNoSignal = value))
+                    value: Text(Settings.sleepWhileNoSignalVar.toString().split(".")[0]),
+                    onPressed: (context) => _TimerPicker(Settings.sleepWhileNoSignalVar).then((value) => setState(() => Settings.sleepWhileNoSignal = value))
                 )
               ],
             )
