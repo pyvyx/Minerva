@@ -119,7 +119,7 @@ class _HomeState extends State<Home>
 
     showCupertinoModalPopup<void>(context: context, builder: (BuildContext context)
     {
-      return CupertinoActionSheet(title: const Text("Information"), actions: actions);
+      return CupertinoActionSheet(title: const Text("Select app"), actions: actions);
     });
 
     // old version
@@ -162,7 +162,35 @@ class _HomeState extends State<Home>
       return;
     }
 
-    final Uri url = Uri.parse('https://www.google.com/maps/search/?api=1&query=$latitude,$longitude');
+    bool cont = true;
+    String u = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    if (Platform.isMacOS)
+    {
+      await showCupertinoModalPopup<void>(context: context, builder: (BuildContext context)
+      {
+        return CupertinoActionSheet(title: const Text("Select app"),
+          actions: [
+            CupertinoActionSheetAction(
+              onPressed: () { u = "https://maps.apple.com/?q=$latitude,$longitude"; Navigator.pop(context); },
+              child: const Text("Apple Maps")
+            ),
+
+            CupertinoActionSheetAction(
+                onPressed: () { u = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude'; Navigator.pop(context);  },
+                child: const Text("Google Maps")
+            )
+          ],
+          cancelButton: CupertinoActionSheetAction(
+              onPressed: () { Navigator.pop(context); cont = false; },
+              isDestructiveAction: true,
+              child: const Text("Cancel")
+          ),
+        );
+      });
+    }
+    if (!cont) return;
+
+    final Uri url = Uri.parse(u);
     if (await canLaunchUrl(url))
     {
       await launchUrl(url);
@@ -386,7 +414,7 @@ void _ShowError(BuildContext context, String msg)
 {
   if (!context.mounted) return;
 
-  Timer? timer = Timer(Duration(milliseconds: 2500), () {
+  Timer? timer = Timer(const Duration(milliseconds: 2500), () {
     if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
   });
 
