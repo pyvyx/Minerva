@@ -20,7 +20,7 @@ enum Status
 
 static HTTPClient http;
 static HardwareSerial SerialGPS(2);
-static unsigned long sleepForAfterSend = 450000;
+static unsigned long sleepForAfterSend = 45000;
 static unsigned long sleepForBetweenSamples = 1000;
 static unsigned long samplesToCollect = 3;
 static unsigned long sleepForWhileNoSignal = 3000;
@@ -124,11 +124,11 @@ void loop()
     static double lng = 0;
     static double alt = 0;
     static double kmh = 0;
-    SendData(lat, lng, alt, kmh);
 
     while (SerialGPS.available() > 0)
     {
-        if (gps.encode(SerialGPS.read()))
+        auto t = SerialGPS.read();
+        if (gps.encode(t))
         {
             size_t toWait = sleepForBetweenSamples / 4;
             if (gps.altitude.isUpdated())
