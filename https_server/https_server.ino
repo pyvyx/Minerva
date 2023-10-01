@@ -143,7 +143,7 @@ void setup()
 void loop()
 {
     secureServer->loop();
-    delay(300);
+    delay(1000);
 }
 
 
