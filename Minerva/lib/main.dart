@@ -56,6 +56,13 @@ class _AppState extends State<App>
   Widget build(BuildContext context) {
     return CupertinoApp(home: Home(updateApp: _UpdateApp), theme: CupertinoThemeData(brightness: Settings.darkModeApp ? Brightness.dark : Brightness.light));
   }
+
+  @override
+  void dispose()
+  {
+    Settings.SaveSettings(true);
+    super.dispose();
+  }
 }
 
 
@@ -75,12 +82,12 @@ class _HomeState extends State<Home>
   final ValueChanged updateApp;
   _HomeState({required this.updateApp});
 
-  double _Latitude = 52.520008;
-  double _Longitude = 13.404954;
-  int _Altitude = 0;
-  int _Speed = 0;
-  int _TimeSinceLastTrackerSignal = 0;
-  int _TimeSinceLastServerUpdate = 0;
+  static double _Latitude = 0;
+  static double _Longitude = 0;
+  static int _Altitude = 0;
+  static int _Speed = 0;
+  static int _TimeSinceLastTrackerSignal = 0;
+  static int _TimeSinceLastServerUpdate = 0;
   final Stopwatch _Stopwatch = Stopwatch()..start();
 
   Future<void> _OpenMapMobile(double latitude, double longitude) async
@@ -205,6 +212,7 @@ class _HomeState extends State<Home>
           _Speed = int.parse(split[4]) < 10 ? 0 : int.parse(split[4]);
         });
       }
+      Settings.SaveSettings(false);
     }
     on FormatException catch (e)
     {
@@ -520,30 +528,49 @@ class Settings
     sleepBetweenSamplesVar = Duration(seconds: _GetSetting(prefs.getInt("sleepBetweenSamplesVar"), 1));
     sleepWhileNoSignalVar = Duration(seconds: _GetSetting(prefs.getInt("sleepWhileNoSignalVar"), 3));
     samplesBeforeSendVar = _GetSetting(prefs.getInt("samplesBeforeSendVar"), 2);
+
+    _HomeState._Latitude = _GetSetting(prefs.getDouble("_HomeState._Latitude"), 0);
+    _HomeState._Longitude = _GetSetting(prefs.getDouble("_HomeState._Longitude"), 0);
+    _HomeState._Altitude = _GetSetting(prefs.getInt("_HomeState._Altitude"), 0);
+    _HomeState._Speed = _GetSetting(prefs.getInt("_HomeState._Speed"), 0);
+    _HomeState._TimeSinceLastTrackerSignal = _GetSetting(prefs.getInt("_HomeState._TimeSinceLastTrackerSignal"), 0);
+    _HomeState._TimeSinceLastServerUpdate = _GetSetting(prefs.getInt("_HomeState._TimeSinceLastServerUpdate"), 0);
    }
 
 
-  static Future<void> SaveSettings() async
+  static Future<void> SaveSettings(bool saveSettings) async
   {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("darkModeApp", darkModeApp);
-    await prefs.setBool("serverRequestChanged", serverRequestChanged);
-    await prefs.setInt("serverRequestVar", serverRequestVar.inSeconds);
+    if (saveSettings)
+    {
+      await prefs.setBool("darkModeApp", darkModeApp);
+      await prefs.setBool("serverRequestChanged", serverRequestChanged);
+      await prefs.setInt("serverRequestVar", serverRequestVar.inSeconds);
 
-    await prefs.setBool("darkMode", darkMode);
-    await prefs.setInt("mapProvider", mapProvider);
-    await prefs.setBool("mapRotation", mapRotation);
-    await prefs.setInt("maxZoom", maxZoom);
-    await prefs.setInt("minZoom", minZoom);
-    await prefs.setInt("maxNativeZoom", maxNativeZoom);
-    await prefs.setInt("minNativeZoom", minNativeZoom);
+      await prefs.setBool("darkMode", darkMode);
+      await prefs.setInt("mapProvider", mapProvider);
+      await prefs.setBool("mapRotation", mapRotation);
+      await prefs.setInt("maxZoom", maxZoom);
+      await prefs.setInt("minZoom", minZoom);
+      await prefs.setInt("maxNativeZoom", maxNativeZoom);
+      await prefs.setInt("minNativeZoom", minNativeZoom);
 
-    await prefs.setBool("trackerApproved", trackerApproved);
-    await prefs.setBool("updateTracker", updateTracker);
-    await prefs.setInt("sleepAfterSendVar", sleepAfterSendVar.inSeconds);
-    await prefs.setInt("sleepBetweenSamplesVar", sleepBetweenSamplesVar.inSeconds);
-    await prefs.setInt("sleepWhileNoSignalVar", sleepWhileNoSignalVar.inSeconds);
-    await prefs.setInt("samplesBeforeSendVar", samplesBeforeSendVar);
+      await prefs.setBool("trackerApproved", trackerApproved);
+      await prefs.setBool("updateTracker", updateTracker);
+      await prefs.setInt("sleepAfterSendVar", sleepAfterSendVar.inSeconds);
+      await prefs.setInt("sleepBetweenSamplesVar", sleepBetweenSamplesVar.inSeconds);
+      await prefs.setInt("sleepWhileNoSignalVar", sleepWhileNoSignalVar.inSeconds);
+      await prefs.setInt("samplesBeforeSendVar", samplesBeforeSendVar);
+    }
+    else
+    {
+      await prefs.setDouble("_HomeState._Latitude", _HomeState._Latitude);
+      await prefs.setDouble("_HomeState._Longitude", _HomeState._Longitude);
+      await prefs.setInt("_HomeState._Altitude", _HomeState._Altitude);
+      await prefs.setInt("_HomeState._Speed", _HomeState._Speed);
+      await prefs.setInt("_HomeState._TimeSinceLastTrackerSignal", _HomeState._TimeSinceLastTrackerSignal);
+      await prefs.setInt("_HomeState._TimeSinceLastServerUpdate", _HomeState._TimeSinceLastServerUpdate);
+    }
   }
 }
 
@@ -666,7 +693,7 @@ class _SettingsPageState extends State<SettingsPage>
   {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () { Settings.SaveSettings().then((e){Navigator.pop(context); updateHomePage(1);}); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
+        leading: CupertinoButton(onPressed: () { Settings.SaveSettings(true).then((e){Navigator.pop(context); updateHomePage(1);}); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
         middle: const Text("Settings"),
       ),
       child: SafeArea(
