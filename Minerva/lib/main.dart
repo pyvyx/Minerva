@@ -14,6 +14,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async
 {
@@ -21,6 +22,7 @@ Future<void> main() async
   await FlutterMapTileCaching.initialise();
   await FMTC.instance('mapStore').manage.createAsync();
   HttpOverrides.global = DevHttpOverrides();
+  Settings.ReadSettings();
   runApp(const App());
 }
 
@@ -377,7 +379,7 @@ void _ShowError(BuildContext context, String msg)
   if (!context.mounted) return;
 
   Timer? timer = Timer(Duration(milliseconds: 2500), () {
-    Navigator.of(context, rootNavigator: true).pop();
+    if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
   });
 
   showCupertinoModalPopup<void>(
@@ -389,8 +391,8 @@ void _ShowError(BuildContext context, String msg)
         ]
     ),
   ).then((value) {
-    //timer?.cancel();
-    //timer = null;
+    timer?.cancel();
+    timer = null;
   });
 }
 
@@ -490,6 +492,59 @@ class Settings
   // server settings
   static String serverIp = "192.168.178.90";
   static String serverAuth = "login:1234";
+
+
+  static T _GetSetting<T>(T? ret, T defaultValue)
+  {
+    return ret ?? defaultValue;
+  }
+
+  static void ReadSettings() async
+  {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    darkModeApp = _GetSetting(prefs.getBool("darkModeApp"), true);
+    serverRequestChanged = _GetSetting(prefs.getBool("serverRequestChanged"), false);
+    serverRequestVar = Duration(seconds: _GetSetting(prefs.getInt("serverRequestVar"), 45));
+
+    darkMode = _GetSetting(prefs.getBool("darkMode"), false);
+    mapProvider = _GetSetting(prefs.getInt("mapProvider"), 0);
+    mapRotation = _GetSetting(prefs.getBool("mapRotation"), false);
+    maxZoom = _GetSetting(prefs.getInt("maxZoom"), 17);
+    minZoom = _GetSetting(prefs.getInt("minZoom"), 0);
+    maxNativeZoom = _GetSetting(prefs.getInt("maxNativeZoom"), 10);
+    minNativeZoom = _GetSetting(prefs.getInt("minNativeZoom"), 0);
+
+    trackerApproved = _GetSetting(prefs.getBool("trackerApproved"), true);
+    updateTracker = _GetSetting(prefs.getBool("updateTracker"), false);
+    sleepAfterSendVar = Duration(seconds: _GetSetting(prefs.getInt("sleepAfterSendVar"), 45));
+    sleepBetweenSamplesVar = Duration(seconds: _GetSetting(prefs.getInt("sleepBetweenSamplesVar"), 1));
+    sleepWhileNoSignalVar = Duration(seconds: _GetSetting(prefs.getInt("sleepWhileNoSignalVar"), 3));
+    samplesBeforeSendVar = _GetSetting(prefs.getInt("samplesBeforeSendVar"), 2);
+   }
+
+
+  static Future<void> SaveSettings() async
+  {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("darkModeApp", darkModeApp);
+    await prefs.setBool("serverRequestChanged", serverRequestChanged);
+    await prefs.setInt("serverRequestVar", serverRequestVar.inSeconds);
+
+    await prefs.setBool("darkMode", darkMode);
+    await prefs.setInt("mapProvider", mapProvider);
+    await prefs.setBool("mapRotation", mapRotation);
+    await prefs.setInt("maxZoom", maxZoom);
+    await prefs.setInt("minZoom", minZoom);
+    await prefs.setInt("maxNativeZoom", maxNativeZoom);
+    await prefs.setInt("minNativeZoom", minNativeZoom);
+
+    await prefs.setBool("trackerApproved", trackerApproved);
+    await prefs.setBool("updateTracker", updateTracker);
+    await prefs.setInt("sleepAfterSendVar", sleepAfterSendVar.inSeconds);
+    await prefs.setInt("sleepBetweenSamplesVar", sleepBetweenSamplesVar.inSeconds);
+    await prefs.setInt("sleepWhileNoSignalVar", sleepWhileNoSignalVar.inSeconds);
+    await prefs.setInt("samplesBeforeSendVar", samplesBeforeSendVar);
+  }
 }
 
 
@@ -611,7 +666,7 @@ class _SettingsPageState extends State<SettingsPage>
   {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
-        leading: CupertinoButton(onPressed: () { Navigator.pop(context); updateHomePage(1); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
+        leading: CupertinoButton(onPressed: () { Settings.SaveSettings().then((e){Navigator.pop(context); updateHomePage(1);}); }, padding: EdgeInsets.zero, child: const Icon(Icons.arrow_back_ios_new)),
         middle: const Text("Settings"),
       ),
       child: SafeArea(
