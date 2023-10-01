@@ -4,6 +4,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <Adafruit_SSD1306.h>
 
 // Includes for the server
 #include <SSLCert.hpp>
@@ -34,19 +35,44 @@ bool settingsApplied = false;
 unsigned long lastSignal = 0;
 std::unique_ptr<HTTPSServer> secureServer;
 
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+void Print(String text)
+{
+    int16_t x, y;
+    uint16_t w, h;
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE); // White text
+    display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
+
+    x = (SCREEN_WIDTH - w) / 2;
+    y = (SCREEN_HEIGHT - h) / 2;
+
+    display.setCursor(x, y);
+    display.clearDisplay();
+    display.print(text);
+    display.display();
+}
+
+
 void Restart()
 {
-    Serial.println("Restarting...");
+    Print("Restarting...");
     ESP.restart();
 }
 
 
 void setup()
 {
+    display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+    display.display(); // zeigt den Grafikpuffer auf dem OLED-Display
+    
     Serial.begin(115200);
     delay(3000);  // wait for the monitor to reconnect after uploading.
-
-    Serial.println("Creating a new self-signed certificate.");
+    Print("Creating self-signed certificate");
 
     // First, we create an empty certificate:
     std::unique_ptr<SSLCert> cert(new SSLCert());
@@ -70,10 +96,10 @@ void setup()
     // Now check if creating that worked
     if (createCertResult != 0)
     {
-        Serial.printf("Creating certificate failed. Error Code = 0x%02X, check SSLCert.hpp for details", createCertResult);
+        Print("Failed to create certificate");
         Restart();
     }
-    Serial.println("Creating the certificate was successful");
+    Print("Successfully created certificate");
 
     // If you're working on a serious project, this would be a good place to initialize some form of non-volatile storage
     // and to put the certificate and the key there. This has the advantage that the certificate stays the same after a reboot
@@ -99,16 +125,15 @@ void setup()
     secureServer = std::unique_ptr<HTTPSServer>(new HTTPSServer(cert.get()));
 
     // Connect to WiFi
-    Serial.println("Setting up WiFi");
+    Print("Setting up WiFi");
     WiFi.begin(WIFI_SSID, WIFI_PSK);
     while (WiFi.status() != WL_CONNECTED)
     {
-        Serial.print(".");
+        display.print(".");
+        display.display();
         delay(500);
     }
-
-    Serial.print("Connected. IP=");
-    Serial.println(WiFi.localIP());
+    Print("Connected");
 
     // For every resource available on the server, we need to create a ResourceNode
     // The ResourceNode links URL and HTTP method to a handler function
@@ -129,14 +154,14 @@ void setup()
     secureServer->setDefaultNode(node404);
     secureServer->addMiddleware(Authenticate);
 
-    Serial.println("Starting server...");
+    Print("Starting server...");
     secureServer->start();
     if (!secureServer->isRunning())
     {
-        Serial.println("Failed to start server");
+        Print("Failed to start server...Attempting restart");
         Restart();
     }
-    Serial.println("Server ready.");
+    Print("Server ready");
 }
 
 
@@ -144,6 +169,10 @@ void loop()
 {
     secureServer->loop();
     delay(1000);
+
+    if (WiFi.status() != WL_CONNECTED)
+        Print("Not connected");
+    else Print(WiFi.localIP().toString());
 }
 
 
@@ -152,9 +181,15 @@ void Authenticate(HTTPRequest* req, HTTPResponse* res, std::function<void()> nex
     static const char* user = "login";
     static const char* apiKey = "d404559f602eab6fd602ac7680dacbfaadd13630335e951f097af3900e9de176b6db28512f2e000b9d04fba5133e8b1c6e8df59db3a8ab9d60be4b97cc9e81db";
     if (strcmp(apiKey, hash_sha512_binary(req->getBasicAuthPassword().c_str(), req->getBasicAuthPassword().size(), NULL)) == 0 && strcmp(user, req->getBasicAuthUser().c_str()) == 0)
+    {
+        Print("Accepting incoming request");
         next();
+    }
     else
+    {
+        Print("Denied incoming request");
         Handle404(req, res);
+    }
 }
 
 
@@ -171,7 +206,7 @@ bool ReadBytes(HTTPRequest* req, HTTPResponse* res, char* buffer, size_t size)
     {
         req->discardRequestBody();
         res->setStatusCode(Status::Error);
-        Serial.println("Request is too long");
+        Print("Request is too long");
         return false;
     }
     return true;
