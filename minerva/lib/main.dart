@@ -181,9 +181,9 @@ class _HomeState extends State<Home>
             )
           ],
           cancelButton: CupertinoActionSheetAction(
-              onPressed: () { Navigator.pop(context); cont = false; },
-              isDestructiveAction: true,
-              child: const Text("Cancel")
+            onPressed: () { Navigator.pop(context); cont = false; },
+            isDestructiveAction: true,
+            child: const Text("Cancel")
           ),
         );
       });
@@ -640,15 +640,15 @@ class _SettingsPageState extends State<SettingsPage>
               Navigator.pop(context);
             },
             child: const Text('Google Maps'),
-          ),
-          CupertinoActionSheetAction(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            isDestructiveAction: true,
-            child: const Text('Cancel')
           )
         ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          isDestructiveAction: true,
+          child: const Text('Cancel')
+        )
       ),
     );
     setState((){});
