@@ -44,6 +44,7 @@ dependencies:
   settings_ui: ^2.0.2
   flutter_map_tile_caching: 8.0.1
   shared_preferences: ^2.2.1
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -97,3 +98,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_launcher_icons:
+  image_path: "assets/icon/minerva.png"
+  android: true
+  ios: true
+  linux: true
+  web:
+    generate: true
+  windows:
+    generate: true
+  macos:
+    generate: true
