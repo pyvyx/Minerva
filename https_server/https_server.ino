@@ -1,6 +1,5 @@
-// TODO: Configure your WiFi here
-#define WIFI_SSID "FRITZ!Box 7330"
-#define WIFI_PSK "04885702616868858006"
+#define WIFI_SSID "WIFI_NAME"
+#define WIFI_PSK "WIFI_PASSWORD"
 
 #include <Arduino.h>
 #include <WiFi.h>
