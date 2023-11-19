@@ -10,8 +10,8 @@ Minerva is the mobile app designed for tracking and configuring your tracker thr
 ## Trackers Location on Dynamic Map
 
 <table><tr>
-<td> <img src="./docs/tracker_near.png" alt="Drawing"/> </td>
-<td> <img src="./docs/tracker_far.png" alt="Drawing"/> </td>
+<td> <img src="./docs/tracker_near.png"/> </td>
+<td> <img src="./docs/tracker_far.png"/> </td>
 </tr></table>
 
 ## Extended Tracker Information
@@ -22,7 +22,7 @@ Minerva is the mobile app designed for tracking and configuring your tracker thr
 - Speed
 
 <p align="center">
-    <img src="./docs/tracker_info.png" alt="drawing" width="320">
+    <img src="./docs/tracker_info.png" width="320">
 </p>
 
 Click on either latitude or longitude to seamlessly redirect to your preferred navigation app on mobile and Google Maps on desktop.
@@ -30,7 +30,7 @@ Click on either latitude or longitude to seamlessly redirect to your preferred n
 ## Settings
 
 <p align="center">
-    <img src="./docs/app_settings.png" alt="drawing" width="320">
+    <img src="./docs/app_settings.png" width="320">
 </p>
 
 Minerva allows you to modify all tracker settings directly from the app. This flexibility eliminates the need for recompiling and redeploying the app for every single configuration change, providing a seamless and efficient user experience.
