@@ -1,45 +1,21 @@
-# Building and Installing an iOS App without a Developer Certificate
+<p align="center">
+    <img src="./minerva/docs/minerva-removebg.png" width="350">
+</p>
 
-This guide will walk you through the steps to build and install an iOS app without the need for a developer certificate. Please follow these instructions carefully.
+# Minerva
 
-## Prerequisites
+## For Additional Information, Please Read the Project READMEs
 
-Before getting started, make sure you have the following:
+Welcome to my comprehensive project that seamlessly integrates three key components: an HTTPS server, a tracker, and the Minerva mobile app. Together, these elements form a robust tracking system. For additional information read the readmes of the projects.
 
-1. [Sidestore](https://wiki.sidestore.io/guides/install.html): Download and install Sidestore to sideload the app.
+# HTTPS Server
 
-2. If you encounter the error "Can't create a proxy server" when trying to add your app, follow these steps:
+THe HTTPS server offers two implementations, in Go and C++, catering to both ESP32 and regular server.
 
-   - Uninstall Sidestore
-  
-   - Install Sidestore using the complex route via AltServer and manually create a pairing page.
+# Minerva: Mobile App for Tracker Configuration and Navigation
 
-   - After creating the pairing page, rename the `*.mobiledevicepairing` file to `ALTPairingFile.mobiledevicepairing`. (Refer to [SideStore/SideStore#482](https://github.com/SideStore/SideStore/issues/482))
+Minerva, the mobile app, provides an intuitive interface for tracking and configuring your devices. It allows monitoring of the tracker's location, displays extended information, and enables modification of settings directly from the app. The minerva readme contains details on building, deploying, and prerequisites.
 
-   - Note: Using the nightly build of Sidestore may be required instead of the latest stable version.
+# Tracker
 
-## Compiling the App
-
-1. Open your terminal and run the following command to compile the app:
-
-   ```bash
-   flutter build ios --no-codesign --release
-   ```
-
-## Installing the App
-
-1. Go to `/build/ios/iphoneos/`. (Refer to [Stack Overflow answer]([https://github.com/SideStore/SideStore/issues/482](https://stackoverflow.com/questions/63247510/is-it-possible-to-generate-ipa-file-for-ios-without-apple-developer-account-a)))
-
-2. Create a folder named "Payload" (case sensitive).
-
-3. Copy the `Runner.app` into the "Payload" folder.
-
-4. Compress the "Payload" folder using the default .zip format by right-clicking "Compress Runner.app."
-
-5. Rename the compressed `Payload.zip` to `Payload.ipa`.
-
-6. Send the `.ipa` file to your iPhone using a method like email or iCloud. If you use AirDrop, **do not** rename the file before sending.
-
-7. Open the Sidestore app on your iPhone.
-
-8. Navigate to "Apps," click the plus sign (+), and add the app using the provided `.ipa` file.
+The tracker, powered by an ESP32, gathers and transmits data to our HTTPS server. Additional hardware components include NEO-6M and SIM800L (optional, not yet implemented).
