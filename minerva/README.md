@@ -73,7 +73,7 @@ This guide will walk you through the steps to build and install an iOS app witho
 
 Before getting started, make sure you have the following:
 
-1. [Sidestore](https://wiki.sidestore.io/guides/install.html): Download and install Sidestore to sideload the app.
+1. Download and install [Sidestore](https://wiki.sidestore.io/guides/getting-started/) to sideload the app.
 
 2. If you encounter the error "Can't create a proxy server" when trying to add your app, follow these steps:
 
