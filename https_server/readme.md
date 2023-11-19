@@ -1,6 +1,6 @@
 # HTTPS Server
 
-This repository contains two variants of an HTTPS server: one in C++ for the ESP32 and another in Go for the Raspberry Pi.
+This repository encompasses two variants of an HTTPS server: one implemented in C++ for the ESP32 and another in Go for the Raspberry Pi. To enable access to the server from anywhere, beyond your local network, please refer to this [guide](https://microcontrollerslab.com/accessing-esp32-web-server-anywhere-world-esp8266/). The guide is applicable to both ESP32 and Raspberry Pi. Alternatively, you can deploy the Go server on a rented server from a hosting provider for broader accessibility.
 
 ## ESP32 HTTPS Server
 
