@@ -5,8 +5,8 @@
 #include <TinyGPS++.h>
 #include <HardwareSerial.h>
 
-#define WIFI_SSID "FRITZ!Box 7330"
-#define WIFI_PSK  "04885702616868858006"
+#define WIFI_SSID "WIFI_NAME"
+#define WIFI_PSK "WIFI_PASSWORD"
 #define SERVER_IP "https://192.168.178.90"
 
 enum Status
