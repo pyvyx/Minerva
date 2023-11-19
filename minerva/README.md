@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./docs/minerva-removebg.png" alt="drawing" width="350">
+    <img src="./docs/minerva-removebg.png" width="350">
 </p>
 
 # Minerva: Mobile App for Tracker Configuration and Navigation
